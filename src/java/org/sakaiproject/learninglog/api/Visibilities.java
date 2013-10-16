@@ -17,11 +17,8 @@
 
 package org.sakaiproject.learninglog.api;
 
-public class Visibilities
-{
-	public static final String PRIVATE = "PRIVATE";
-
-	public static final String READY = "READY";
-	
+public class Visibilities {
+	public static final String PRIVATE  = "PRIVATE";
+	public static final String READY    = "READY";
 	public static final String RECYCLED = "RECYCLED";
 }

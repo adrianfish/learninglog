@@ -3,23 +3,59 @@
 
 <beans>
 
+	<bean id="org.sakaiproject.learninglog.SakaiProxy" class="org.sakaiproject.learninglog.SakaiProxy" init-method="init">
+        <property name="toolManager"><ref bean="org.sakaiproject.tool.api.ToolManager" /></property>
+        <property name="sessionManager"><ref bean="org.sakaiproject.tool.api.SessionManager" /></property>
+        <property name="serverConfigurationService"><ref bean="org.sakaiproject.component.api.ServerConfigurationService" /></property>
+        <property name="siteService"><ref bean="org.sakaiproject.site.api.SiteService" /></property>
+        <property name="userDirectoryService"><ref bean="org.sakaiproject.user.api.UserDirectoryService" /></property>
+        <property name="entityManager"><ref bean="org.sakaiproject.entity.api.EntityManager" /></property>
+        <property name="sqlService"><ref bean="org.sakaiproject.db.api.SqlService" /></property>
+        <property name="functionManager"><ref bean="org.sakaiproject.authz.api.FunctionManager" /></property>
+        <property name="eventTrackingService"><ref bean="org.sakaiproject.event.api.EventTrackingService" /></property>
+        <property name="emailService"><ref bean="org.sakaiproject.email.api.EmailService" /></property>
+        <property name="contentHostingService"><ref bean="org.sakaiproject.content.api.ContentHostingService" /></property>
+        <property name="securityService"><ref bean="org.sakaiproject.authz.api.SecurityService" /></property>
+	</bean>
+
+	<bean id="org.sakaiproject.learninglog.PersistenceManager" class="org.sakaiproject.learninglog.PersistenceManager" init-method="init">
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.SakaiProxy" /></property>
+	</bean>
+
+	<bean id="org.sakaiproject.learninglog.LearningLogSecurityManager" class="org.sakaiproject.learninglog.LearningLogSecurityManager" init-method="init">
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.SakaiProxy" /></property>
+        <property name="persistenceManager"><ref bean="org.sakaiproject.learninglog.PersistenceManager" /></property>
+	</bean>
+
+	<bean id="org.sakaiproject.learninglog.LearningLogManager" class="org.sakaiproject.learninglog.LearningLogManager" init-method="init">
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.SakaiProxy" /></property>
+        <property name="persistenceManager"><ref bean="org.sakaiproject.learninglog.PersistenceManager" /></property>
+        <property name="securityManager"><ref bean="org.sakaiproject.learninglog.LearningLogSecurityManager" /></property>
+	</bean>
+
 	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
 		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogPostEntityProvider" init-method="init">
 		<property name="developerService"><ref bean="org.sakaiproject.entitybroker.DeveloperHelperService"/></property>
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.LearningLogManager" /></property>
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.SakaiProxy" /></property>
 	</bean>
 	
 	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
 		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogAuthorEntityProvider" init-method="init">
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.LearningLogManager" /></property>
 		<property name="userDirectoryService"><ref bean="org.sakaiproject.user.api.UserDirectoryService"/></property>
 	</bean>
 	
 	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
 		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogCommentEntityProvider" init-method="init">
 		<property name="developerService"><ref bean="org.sakaiproject.entitybroker.DeveloperHelperService"/></property>
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.LearningLogManager" /></property>
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.SakaiProxy" /></property>
 	</bean>
 	
 	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
 		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogRoleEntityProvider" init-method="init">
 		<property name="developerService"><ref bean="org.sakaiproject.entitybroker.DeveloperHelperService"/></property>
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.LearningLogManager" /></property>
 	</bean>
 </beans>

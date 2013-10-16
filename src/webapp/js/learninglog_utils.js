@@ -10,7 +10,7 @@ var LearningLogUtils;
             return;
 
         jQuery.ajax( {
-	 		url : "/direct/learninglog-post/" + postId + "/deleteAttachment.json?siteId=" + blogSiteId + "&attachmentId=" + attachmentId,
+	 		url : "/direct/learninglog-post/" + postId + "/deleteAttachment.json?siteId=" + startupArgs.blogSiteId + "&attachmentId=" + attachmentId,
             dataType : "text",
             async : false,
             cache: false,
@@ -26,7 +26,7 @@ var LearningLogUtils;
 	LearningLogUtils.getCurrentUserRole = function() {
 		var role = null;
 		jQuery.ajax( {
-	 		url : "/direct/learninglog-role/" + blogSiteId + "/currentUserRole.json",
+	 		url : "/direct/learninglog-role/" + startupArgs.blogSiteId + "/currentUserRole.json",
 	   		dataType : "text",
 	   		async : false,
 	   		cache : false,
@@ -75,33 +75,32 @@ var LearningLogUtils;
     }
     
     LearningLogUtils.addFormattedDateToPost = function(post) {
-            var d = new Date(post.createdDate);
-            var formattedCreatedDate = d.getDate() + " " + blog_month_names[d.getMonth()] + " " + d.getFullYear() + " @ " + d.getHours() + ":" + d.getMinutes();
-            post.formattedCreatedDate = formattedCreatedDate;
 
-            d = new Date(post.modifiedDate);
-            var formattedModifiedDate = d.getDate() + " " + blog_month_names[d.getMonth()] + " " + d.getFullYear() + " @ " + d.getHours() + ":" + d.getMinutes();
-            post.formattedModifiedDate = formattedModifiedDate;
+        post.formattedCreatedDate = LearningLogUtils.formatDate(post.createdDate);
+        post.formattedModifiedDate = LearningLogUtils.formatDate(post.modifiedDate);
 
-            for(var k=0,m=post.comments.length;k<m;k++) {
-                d = new Date(post.comments[k].createdDate);
-                formattedCreatedDate = d.getDate() + " " + blog_month_names[d.getMonth()] + " " + d.getFullYear() + " @ " + d.getHours() + ":" + d.getMinutes();
-                post.comments[k].formattedCreatedDate = formattedCreatedDate;
-
-                d = new Date(post.comments[k].modifiedDate);
-                var formattedModifiedDate = d.getDate() + " " + blog_month_names[d.getMonth()] + " " + d.getFullYear() + " @ " + d.getHours() + ":" + d.getMinutes();
-                post.comments[k].formattedModifiedDate = formattedModifiedDate;
-            }
+        for(var k=0,m=post.comments.length;k<m;k++) {
+            post.comments[k].formattedCreatedDate = LearningLogUtils.formatDate(post.comments[k].createdDate);
+            post.comments[k].formattedModifiedDate = LearningLogUtils.formatDate(post.comments[k].modifiedDate);
         }
+    }
     
     LearningLogUtils.addFormattedDatesToCurrentPost = function () {
     	LearningLogUtils.addFormattedDateToPost(blogCurrentPost);
 	}
+
+    LearningLogUtils.formatDate = function(longDate) {
+
+        var d = new Date(longDate);
+        var hours = d.getHours();
+        if(hours < 10) hours = '0' + hours;
+        var minutes = d.getMinutes();
+        if(minutes < 10) minutes = '0' + minutes;
+        return d.getDate() + " " + blog_month_names[d.getMonth()] + " " + d.getFullYear() + " @ " + hours + ":" + minutes;
+    }
 	
 	LearningLogUtils.attachProfilePopup = function() {
 	
-		if(blogInPDA) return;
-		
 		$('a.showPostsLink').cluetip({
 			width: '620px',
 			cluetipClass: 'blog',
@@ -120,7 +119,7 @@ var LearningLogUtils;
 	LearningLogUtils.setPostsForCurrentSite = function() {
 
 		jQuery.ajax( {
-	       	url : "/direct/learninglog-post.json?siteId=" + blogSiteId,
+	       	url : "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId,
 	       	dataType : "json",
 	       	async : false,
 			cache: false,
@@ -138,7 +137,7 @@ var LearningLogUtils;
 		var roleMapList = [];
 		
 		jQuery.ajax({
-	    	url : "/direct/learninglog-role/" + blogSiteId + ".json",
+	    	url : "/direct/learninglog-role/" + startupArgs.blogSiteId + ".json",
 	      	dataType : "json",
 	       	async : false,
 			cache: false,
@@ -157,7 +156,7 @@ var LearningLogUtils;
 
 	LearningLogUtils.savePermissions = function() {
 		var boxes = $('.blog_role_radiobutton:checked');
-		var myData = {'siteId':blogSiteId};
+		var myData = {'siteId':startupArgs.blogSiteId};
 
 		for(var i=0,j=boxes.length;i<j;i++)
 			myData[boxes[i].name] = boxes[i].value;
@@ -195,8 +194,6 @@ var LearningLogUtils;
 		
 	LearningLogUtils.storePost = function(visibility,isPublish,isAutosave) {
 
-        alert(isAutosave);
-	
 		var title = $('#blog_title_field').val();
         if(title.length < 4) {
         	alert("You must add a title of at least 4 characters.");
@@ -229,7 +226,7 @@ var LearningLogUtils;
 				'id':$('#blog_comment_id_field').val(),
 				'postId':blogCurrentPost.id,
 				'content':SakaiUtils.getEditorData('blog_content_editor'),
-				'siteId':blogSiteId
+				'siteId':startupArgs.blogSiteId
 				};
 
 		jQuery.ajax( {
@@ -276,7 +273,7 @@ var LearningLogUtils;
 		var commands = '';
 
 		for(var i=0,j=selected.length;i<j;i++) {
-			commands += "/direct/learninglog-post/" + selected[i].id + "?siteId=" + blogSiteId;
+			commands += "/direct/learninglog-post/" + selected[i].id + "?siteId=" + startupArgs.blogSiteId;
 			if(i < (j - 1)) commands += ",";
 		}
 
@@ -324,7 +321,7 @@ var LearningLogUtils;
 	LearningLogUtils.getCurrentUserPermissions = function() {
 		var permissions = null;
 		jQuery.ajax( {
-	 		url : "/direct/site/" + blogSiteId + "/userPerms/learninglog.json",
+	 		url : "/direct/site/" + startupArgs.blogSiteId + "/userPerms/learninglog.json",
 	   		dataType : "json",
 	   		async : false,
 	   		cache : false,
@@ -371,7 +368,7 @@ var LearningLogUtils;
 			return false;
 		
 		jQuery.ajax( {
-	 		url : "/direct/learninglog-comment/" + commentId + "?siteId=" + blogSiteId,
+	 		url : "/direct/learninglog-comment/" + commentId + "?siteId=" + startupArgs.blogSiteId,
 	   		async : false,
 			type:'DELETE',
 		   	success : function(text,status) {

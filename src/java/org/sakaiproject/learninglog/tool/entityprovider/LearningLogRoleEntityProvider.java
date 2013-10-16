@@ -22,22 +22,20 @@ import org.sakaiproject.learninglog.LearningLogManager;
 import org.sakaiproject.learninglog.SakaiProxy;
 import org.sakaiproject.learninglog.api.Roles;
 
+import lombok.Setter;
+
+@Setter
 public class LearningLogRoleEntityProvider extends AbstractEntityProvider implements EntityProvider, AutoRegisterEntityProvider, 
 	Inputable, Outputable, Resolvable,Createable, Describeable, ActionsExecutable {
 	
 	public final static String ENTITY_PREFIX = "learninglog-role";
-	
-	private LearningLogManager learningLogManager;
-	
-	private DeveloperHelperService developerService = null;
-	public void setDeveloperService(DeveloperHelperService developerService) {
-		this.developerService = developerService;
-	}
 
 	protected final Logger LOG = Logger.getLogger(LearningLogRoleEntityProvider.class);
 	
+	private DeveloperHelperService developerService = null;
+	private LearningLogManager learningLogManager;
+	
 	public void init() {
-		learningLogManager = new LearningLogManager(new SakaiProxy());
 	}
 	
 	private Map<String,String> sample = new HashMap<String,String>();

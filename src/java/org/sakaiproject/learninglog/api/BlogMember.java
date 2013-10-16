@@ -1,9 +1,13 @@
 package org.sakaiproject.learninglog.api;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.sakaiproject.user.api.User;
 
-public class BlogMember
-{
+@Getter @Setter
+public class BlogMember {
+	
 	private int numberOfPosts = 0;
 	
 	private int numberOfComments = 0;
@@ -14,81 +18,25 @@ public class BlogMember
 	
 	private String lastCommentCreator = "";
 
+	// We don't want this serialising by EB :)
 	private transient User sakaiUser = null;
 	
-	public BlogMember()
-	{
-	}
+	public BlogMember() { }
 	
-	public BlogMember(User user)
-	{
+	public BlogMember(User user) {
 		this.sakaiUser = user;
 	}
 
-	public String getUserId()
-	{
+	public String getUserId() {
 		return sakaiUser.getId();
 	}
 
-	public String getUserEid()
-	{
+	public String getUserEid() {
 		return sakaiUser.getEid();
 
 	}
 
-	public String getUserDisplayName()
-	{
+	public String getUserDisplayName() {
 		return sakaiUser.getLastName() + ", " + sakaiUser.getFirstName();
-		//return sakaiUser.getDisplayName();
-	}
-
-	public void setNumberOfPosts(int numberOfPosts)
-	{
-		this.numberOfPosts = numberOfPosts;
-	}
-
-	public int getNumberOfPosts()
-	{
-		return numberOfPosts;
-	}
-
-	public void setDateOfLastPost(long last)
-	{
-		this.dateOfLastPost = last;
-	}
-
-	public long getDateOfLastPost()
-	{
-		return dateOfLastPost;
-	}
-
-	public void setDateOfLastComment(long dateOfLastComment)
-	{
-		this.dateOfLastComment = dateOfLastComment;
-	}
-
-	public long getDateOfLastComment()
-	{
-		return dateOfLastComment;
-	}
-
-	public void setLastCommentCreator(String lastCommentCreator)
-	{
-		this.lastCommentCreator = lastCommentCreator;
-	}
-
-	public String getLastCommentCreator()
-	{
-		return lastCommentCreator;
-	}
-
-	public void setNumberOfComments(int numberOfComments)
-	{
-		this.numberOfComments = numberOfComments;
-	}
-
-	public int getNumberOfComments()
-	{
-		return numberOfComments;
 	}
 }

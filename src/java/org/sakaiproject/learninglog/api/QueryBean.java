@@ -20,134 +20,66 @@ package org.sakaiproject.learninglog.api;
 import java.util.ArrayList;
 import java.util.List;
 
-public class QueryBean
-{
-	private String _queryString;
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter @Setter
+public class QueryBean {
+	
+	private String queryString;
 
 	private List<String> visibilities;
 
-	private long _initDate;
+	private long initDate;
 
-	private long _endDate;
+	private long endDate;
 
-	private String _user;
+	private String creator;
 
 	private String siteId;
 	
 	private String caller;
 
-	public QueryBean()
-	{
+	public QueryBean() {
+		
 		visibilities = new ArrayList<String>(); // this mean no filter by visibility
-		_initDate = -1; // this mean no filter by initDate;
-		_endDate = -1; // this mean no filter by endDate
-		_user = "";
+		initDate = -1; // this mean no filter by initDate;
+		endDate = -1; // this mean no filter by endDate
+		creator = "";
 		siteId = "";
 		caller = "";
 	}
 
-	public boolean hasConditions()
-	{
-		return siteId.length() > 0 || visibilities.size() > 0 || _initDate != -1 || _endDate != -1;
+	public boolean hasConditions() {
+		return siteId.length() > 0 || visibilities.size() > 0 || initDate != -1 || endDate != -1;
 	}
 
-	public void setQueryString(String queryString)
-	{
-		_queryString = queryString;
-	}
-
-	public String getQueryString()
-	{
-		return _queryString;
-	}
-
-	public boolean queryBySiteId()
-	{
+	public boolean queryBySiteId() {
 		return !siteId.equals("");
 	}
 
-	public boolean queryByVisibility()
-	{
+	public boolean queryByVisibility() {
 		return visibilities.size() > 0;
 	}
 
-	public void setVisibilities(String[] visibilities)
-	{
+	public void setVisibilities(String[] visibilities) {
+		
 		this.visibilities.clear();
 		
-		for(String v : visibilities)
-		{
+		for(String v : visibilities) {
 			this.visibilities.add(v);
 		}
 	}
 
-	public List<String> getVisibilities()
-	{
-		return visibilities;
+	public boolean queryByInitDate() {
+		return initDate != -1;
 	}
 
-	public boolean queryByInitDate()
-	{
-		return _initDate != -1;
+	public boolean queryByEndDate() {
+		return endDate != -1;
 	}
 
-	public void setInitDate(long initDate)
-	{
-		_initDate = initDate;
-	}
-
-	public long getInitDate()
-	{
-		return _initDate;
-	}
-
-	public boolean queryByEndDate()
-	{
-		return _endDate != -1;
-	}
-
-	public void setEndDate(long endDate)
-	{
-		_endDate = endDate;
-	}
-
-	public long getEndDate()
-	{
-		return _endDate;
-	}
-
-	public void setCreator(String user)
-	{
-		this._user = user;
-	}
-
-	public String getCreator()
-	{
-		return _user;
-	}
-
-	public void setSiteId(String siteId)
-	{
-		this.siteId = siteId;
-	}
-
-	public String getSiteId()
-	{
-		return siteId;
-	}
-
-	public boolean queryByCreator()
-	{
-		return ! _user.trim().equals("");
-	}
-
-	public void setCaller(String caller)
-	{
-		this.caller = caller;
-	}
-
-	public String getCaller()
-	{
-		return caller;
+	public boolean queryByCreator() {
+		return ! creator.trim().equals("");
 	}
 }

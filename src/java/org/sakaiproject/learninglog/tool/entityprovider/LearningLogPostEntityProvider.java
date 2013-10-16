@@ -39,6 +39,9 @@ import org.sakaiproject.learninglog.api.Visibilities;
 import org.sakaiproject.util.RequestFilter;
 import org.sakaiproject.util.ResourceLoader;
 
+import lombok.Setter;
+
+@Setter
 public class LearningLogPostEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Inputable, Createable, Outputable, Describeable, Deleteable, CollectionResolvable, ActionsExecutable, Statisticable
 {
 	public final static String ENTITY_PREFIX = "learninglog-post";
@@ -52,18 +55,11 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			LearningLogManager.BLOG_COMMENT_CREATED,
 			LearningLogManager.BLOG_COMMENT_DELETED};
 	
-	private LearningLogManager learningLogManager;
-
 	private DeveloperHelperService developerService = null;
-	public void setDeveloperService(DeveloperHelperService developerService) {
-		this.developerService = developerService;
-	}
-	
+	private LearningLogManager learningLogManager;
 	private SakaiProxy sakaiProxy  = null;
 	
 	public void init() {
-		sakaiProxy = new SakaiProxy();
-		learningLogManager = new LearningLogManager(sakaiProxy);
 	}
 
 	protected final Logger LOG = Logger.getLogger(LearningLogPostEntityProvider.class);
@@ -134,6 +130,9 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 		post.setContent(content);
 		post.setAttachments(getAttachments(params));
 		post.isAutosave = (isAutosave.equals("yes")) ? true : false;
+
+		String toolId = sakaiProxy.getLearningLogToolId(siteId);
+		post.setUrl(sakaiProxy.getServerUrl() + "/portal/directtool/" + toolId + "?state=post&postId=" + id);
 		
 		boolean isNew = "".equals(post.getId());
 
@@ -149,7 +148,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			try {
 				String json = "{\"id\":\"" + post.getId() + "\",\"isAutosave\":" + post.isAutosave + ",\"attachments\":[";
 				for(Attachment attachment : post.getAttachments()) {
-					json += "{\"id\":\"" + attachment.getId() + "\",\"name\":\"" + attachment.getName() + "\"},";
+					json += "{\"id\":\"" + attachment.id + "\",\"name\":\"" + attachment.name + "\"},";
 				}
 				if(json.endsWith(",")) {
 					json = json.substring(0,json.length() - 1);

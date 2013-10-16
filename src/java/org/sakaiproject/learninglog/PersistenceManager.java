@@ -19,35 +19,22 @@ import org.sakaiproject.learninglog.api.BlogMember;
 import org.sakaiproject.learninglog.api.Comment;
 import org.sakaiproject.learninglog.api.Post;
 import org.sakaiproject.learninglog.api.QueryBean;
-import org.sakaiproject.learninglog.sql.HiperSonicGenerator;
-import org.sakaiproject.learninglog.sql.ISQLGenerator;
-import org.sakaiproject.learninglog.sql.MySQLGenerator;
-import org.sakaiproject.learninglog.sql.OracleSQLGenerator;
+import org.sakaiproject.learninglog.sql.SQLGenerator;
+
+import lombok.Setter;
 
 public class PersistenceManager {
 
-	private Logger logger = Logger.getLogger(PersistenceManager.class);
+	private final Logger logger = Logger.getLogger(PersistenceManager.class);
 
-	private ISQLGenerator sqlGenerator;
+	private SQLGenerator sqlGenerator;
 
+    @Setter
 	private SakaiProxy sakaiProxy;
 
-	public PersistenceManager(SakaiProxy sakaiProxy) {
+	public void init() {
 		
-		this.sakaiProxy = sakaiProxy;
-
-		String vendor = sakaiProxy.getVendor();
-
-		if (vendor.equals("mysql")) {
-			sqlGenerator = new MySQLGenerator();
-		} else if (vendor.equals("oracle")) {
-			sqlGenerator = new OracleSQLGenerator();
-		} else if (vendor.equals("hsqldb")) {
-			sqlGenerator = new HiperSonicGenerator();
-		} else {
-			logger.error("Unknown database vendor:" + vendor + ". Defaulting to HypersonicDB ...");
-			sqlGenerator = new HiperSonicGenerator();
-		}
+		sqlGenerator = new SQLGenerator();
 
 		if (sakaiProxy.isAutoDDL()) {
 			if (!setupTables()) {
@@ -282,8 +269,8 @@ public class PersistenceManager {
 						if(!rs.next()) {
 							// Badness
 						}
-						attachment.setId(rs.getInt(1));
-						sakaiProxy.addAttachment(post.getSiteId(), post.getCreatorId(), attachment);
+						attachment.id = rs.getInt(1);
+						sakaiProxy.addDraftAttachment(post.getSiteId(), post.getCreatorId(), attachment);
 					}
 				}
 
@@ -395,12 +382,13 @@ public class PersistenceManager {
 		return false;
 	}
 
-	public boolean restorePost(Post post) {
+	public boolean restorePost(String postId) {
 
 		Connection connection = null;
 		List<PreparedStatement> statements = null;
 
 		try {
+			Post post = getPost(postId);
 			connection = sakaiProxy.borrowConnection();
 			boolean oldAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
@@ -518,44 +506,42 @@ public class PersistenceManager {
 		Statement commentST = null;
 
 		try {
-			commentST = connection.createStatement();
+            commentST = connection.createStatement();
+            while (rs.next()) {
+                Post post = new Post();
+                String postId = rs.getString("POST_ID");
+                post.setId(postId);
+                String siteId = rs.getString("SITE_ID");
+                post.setSiteId(siteId);
+                String title = rs.getString("TITLE"); post.setTitle(title);
 
-			while (rs.next()) {
-				Post post = new Post();
-
-				String postId = rs.getString(ISQLGenerator.POST_ID);
-				post.setId(postId);
-
-				String siteId = rs.getString(ISQLGenerator.SITE_ID);
-				post.setSiteId(siteId);
-
-				String title = rs.getString(ISQLGenerator.TITLE);
-				post.setTitle(title);
-
-				String content = rs.getString(ISQLGenerator.CONTENT);
+				String content = rs.getString("CONTENT");
 				post.setContent(content);
 
-				Date postCreatedDate = rs.getTimestamp(ISQLGenerator.CREATED_DATE);
+				Date postCreatedDate = rs.getTimestamp("CREATED_DATE");
 				post.setCreatedDate(postCreatedDate.getTime());
 
-				Date postModifiedDate = rs.getTimestamp(ISQLGenerator.MODIFIED_DATE);
+				Date postModifiedDate = rs.getTimestamp("MODIFIED_DATE");
 				post.setModifiedDate(postModifiedDate.getTime());
 
-				String postCreatorId = rs.getString(ISQLGenerator.CREATOR_ID);
+				String postCreatorId = rs.getString("CREATOR_ID");
 				post.setCreatorId(postCreatorId);
 
-				String visibility = rs.getString(ISQLGenerator.VISIBILITY);
+				String visibility = rs.getString("VISIBILITY");
 				post.setVisibility(visibility);
+
+                String toolId = sakaiProxy.getLearningLogToolId(siteId);
+                post.setUrl(sakaiProxy.getServerUrl() + "/portal/directtool/" + toolId + "?state=post&postId=" + postId);
 
 				String sql = sqlGenerator.getSelectComments(postId);
 				ResultSet commentRS = commentST.executeQuery(sql);
 
 				while (commentRS.next()) {
-					String commentId = commentRS.getString(ISQLGenerator.COMMENT_ID);
-					String commentCreatorId = commentRS.getString(ISQLGenerator.CREATOR_ID);
-					Date commentCreatedDate = commentRS.getTimestamp(ISQLGenerator.CREATED_DATE);
-					Date commentModifiedDate = commentRS.getTimestamp(ISQLGenerator.MODIFIED_DATE);
-					String commentContent = commentRS.getString(ISQLGenerator.CONTENT);
+					String commentId = commentRS.getString("COMMENT_ID");
+					String commentCreatorId = commentRS.getString("CREATOR_ID");
+					Date commentCreatedDate = commentRS.getTimestamp("CREATED_DATE");
+					Date commentModifiedDate = commentRS.getTimestamp("MODIFIED_DATE");
+					String commentContent = commentRS.getString("CONTENT");
 
 					Comment comment = new Comment();
 					comment.setId(commentId);
@@ -586,11 +572,11 @@ public class PersistenceManager {
 
 					while (rs2.next()) {
 						int id = rs2.getInt("ID");
-						String name = rs2.getString(ISQLGenerator.NAME);
+						String name = rs2.getString("NAME");
 
 						Attachment attachment = new Attachment();
-						attachment.setId(id);
-						attachment.setName(name);
+						attachment.id = id;
+						attachment.name = name;
 
 						sakaiProxy.getAttachment(post.getSiteId(), attachment);
 
@@ -667,19 +653,19 @@ public class PersistenceManager {
 			String sql = sqlGenerator.getSelectAuthorStatement(author.getUserId(), siteId);
 			rs = st.executeQuery(sql);
 			if (rs.next()) {
-				int totalPosts = rs.getInt(ISQLGenerator.TOTAL_POSTS);
-				int totalComments = rs.getInt(ISQLGenerator.TOTAL_COMMENTS);
+				int totalPosts = rs.getInt("TOTAL_POSTS");
+				int totalComments = rs.getInt("TOTAL_COMMENTS");
 
-				Timestamp lastPostTimestamp = rs.getTimestamp(ISQLGenerator.LAST_POST_DATE);
+				Timestamp lastPostTimestamp = rs.getTimestamp("LAST_POST_DATE");
 				if (null != lastPostTimestamp) {
 
 					long lastPostDate = lastPostTimestamp.getTime();
 
-					Timestamp lastCommentTimestamp = rs.getTimestamp(ISQLGenerator.LAST_COMMENT_DATE);
+					Timestamp lastCommentTimestamp = rs.getTimestamp("LAST_COMMENT_DATE");
 					if (lastCommentTimestamp != null)
 						author.setDateOfLastComment(lastCommentTimestamp.getTime());
 
-					String lastCommentAuthor = rs.getString(ISQLGenerator.LAST_COMMENT_AUTHOR);
+					String lastCommentAuthor = rs.getString("LAST_COMMENT_AUTHOR");
 					author.setNumberOfPosts(totalPosts);
 					author.setNumberOfComments(totalComments);
 					author.setDateOfLastPost(lastPostDate);
@@ -722,8 +708,8 @@ public class PersistenceManager {
 			rs = st.executeQuery();
 
 			while (rs.next()) {
-				String sakaiRole = rs.getString(ISQLGenerator.SAKAI_ROLE);
-				String llRole = rs.getString(ISQLGenerator.LL_ROLE);
+				String sakaiRole = rs.getString("SAKAI_ROLE");
+				String llRole = rs.getString("LL_ROLE");
 				tutorRoles.put(sakaiRole, llRole);
 			}
 
@@ -758,7 +744,7 @@ public class PersistenceManager {
 			st = sqlGenerator.getSelectLLRoleStatement(siteId, sakaiRole, connection);
 			rs = st.executeQuery();
 			if (rs.next())
-				return rs.getString(ISQLGenerator.LL_ROLE);
+				return rs.getString("LL_ROLE");
 			else {
 				logger.error("No LL role for site '" + siteId + "' and sakai Role '" + sakaiRole + "'. Returning null ...");
 				return null;

@@ -56,9 +56,12 @@ import org.sakaiproject.user.api.UserDirectoryService;
 import org.sakaiproject.user.api.UserNotDefinedException;
 import org.sakaiproject.util.BaseResourceProperties;
 
+import lombok.Setter;
+
+@Setter
 public class SakaiProxy {
 
-	private Logger logger = Logger.getLogger(SakaiProxy.class);
+	private final Logger logger = Logger.getLogger(SakaiProxy.class);
 
 	private ToolManager toolManager;
 	private SessionManager sessionManager;
@@ -70,36 +73,21 @@ public class SakaiProxy {
 	private FunctionManager functionManager;
 	private EventTrackingService eventTrackingService;
 	private EmailService emailService;
-	private DigestService digestService;
 	private ContentHostingService contentHostingService;
 	private SecurityService securityService;
 	
-	public SakaiProxy() {
-		toolManager = (ToolManager) ComponentManager.get(ToolManager.class);
-		sessionManager = (SessionManager) ComponentManager.get(SessionManager.class);
-		serverConfigurationService = (ServerConfigurationService) ComponentManager.get(ServerConfigurationService.class);
-		siteService = (SiteService) ComponentManager.get(SiteService.class);
-		userDirectoryService = (UserDirectoryService) ComponentManager.get(UserDirectoryService.class);
-		entityManager = (EntityManager) ComponentManager.get(EntityManager.class);
-		entityManager = (EntityManager) ComponentManager.get(EntityManager.class);
-		sqlService = (SqlService) ComponentManager.get(SqlService.class);
-		functionManager = (FunctionManager) ComponentManager.get(FunctionManager.class);
-		eventTrackingService = (EventTrackingService) ComponentManager.get(EventTrackingService.class);
-		emailService = (EmailService) ComponentManager.get(EmailService.class);
-		digestService = (DigestService) ComponentManager.get(DigestService.class);
-		contentHostingService = (ContentHostingService) ComponentManager.get(ContentHostingService.class);
-		securityService = (SecurityService) ComponentManager.get(SecurityService.class);
+	public void init() {
+
+        if(toolManager == null) {
+            System.out.println("DSJKHASDKJAHSDKJHASD");
+        }
+        if(serverConfigurationService == null) {
+            System.out.println("ARGHHHHHHH");
+        }
 	}
 
 	public String getCurrentSiteId() {
-
-		return toolManager.getCurrentPlacement().getContext(); // equivalent to
-															   // PortalService.getCurrentSiteId();
-	}
-
-	public String getCurrentToolId() {
-
-		return toolManager.getCurrentPlacement().getId();
+		return toolManager.getCurrentPlacement().getContext();
 	}
 
 	public String getCurrentUserId() {
@@ -110,17 +98,14 @@ public class SakaiProxy {
 	}
 
 	public Connection borrowConnection() throws SQLException {
-		
 		return sqlService.borrowConnection();
 	}
 
 	public void returnConnection(Connection connection) {
-		
 		sqlService.returnConnection(connection);
 	}
 
 	public String getVendor() {
-		
 		return sqlService.getVendor();
 	}
 
@@ -135,23 +120,25 @@ public class SakaiProxy {
 		}
 	}
 
-	private String getEmailForTheUser(String userId) {
-		
-		try {
-			User sakaiUser = userDirectoryService.getUser(userId);
-			return sakaiUser.getEmail();
-		} catch (Exception e) {
-			return ""; // this can happen if the user does not longer exist in
-					   // the system
-		}
-	}
+    private String getEmailForTheUser(String userId) {
+
+        try {
+            User sakaiUser = userDirectoryService.getUser(userId);
+            return sakaiUser.getEmail();
+        } catch (Exception e) {
+            return ""; // this can happen if the user does not longer exist in
+                       // the system
+        }
+    }
 
 	public boolean isAutoDDL() {
+
 		String autoDDL = serverConfigurationService.getString("auto.ddl");
 		return autoDDL.equals("true");
 	}
 
 	public List<BlogMember> getSiteMembers(String siteId) {
+
 		ArrayList<BlogMember> result = new ArrayList<BlogMember>();
 		try {
 			Site site = siteService.getSite(siteId);
@@ -185,6 +172,7 @@ public class SakaiProxy {
 	}
 
 	public void registerFunction(String function) {
+
 		List functions = functionManager.getRegisteredFunctions("blog.");
 
 		if (!functions.contains(function)) {
@@ -193,35 +181,18 @@ public class SakaiProxy {
 	}
 
 	public void sendEmailWithMessage(String user, String subject, String message) {
+
 		Set<String> users = new HashSet<String>(1);
 		users.add(user);
 		sendEmailWithMessage(users, subject, message);
-
 	}
 
 	public void sendEmailWithMessage(Set<String> users, String subject, String message) {
 		sendEmailToParticipants(users, subject, message);
 	}
 
-	public void addDigestMessage(String userId, String subject, String message) {
-		try {
-			digestService.digest(userId, subject, message);
-		} catch (Exception e) {
-			logger.error("Failed to add message to digest.", e);
-		}
-	}
-
-	public void addDigestMessage(Set<String> users, String subject, String message) {
-		for (String userId : users) {
-			try {
-				digestService.digest(userId, subject, message);
-			} catch (Exception e) {
-				logger.error("Failed to add message to digest.", e);
-			}
-		}
-	}
-
 	private void sendEmailToParticipants(Set<String> to, String subject, String text) {
+
 		class EmailSender implements Runnable {
 
 			private Thread runner;
@@ -275,6 +246,7 @@ public class SakaiProxy {
 	}
 
 	public Set<String> getSiteUsers(String siteId) {
+
 		try {
 			Site site = siteService.getSite(siteId);
 			return site.getUsers();
@@ -286,6 +258,7 @@ public class SakaiProxy {
 	}
 
 	public BlogMember getMember(String memberId) {
+
 		User user;
 		try {
 			user = userDirectoryService.getUser(memberId);
@@ -299,6 +272,7 @@ public class SakaiProxy {
 	}
 
 	public String getSiteTitle(String siteId) {
+
 		try {
 			return siteService.getSite(siteId).getTitle();
 		} catch (Exception e) {
@@ -309,6 +283,7 @@ public class SakaiProxy {
 	}
 
 	public String getLearningLogPageId(String siteId) {
+
 		try {
 			Site site = siteService.getSite(siteId);
 			ToolConfiguration tc = site.getToolForCommonId("sakai.learninglog");
@@ -319,6 +294,7 @@ public class SakaiProxy {
 	}
 
 	public String getLearningLogToolId(String siteId) {
+
 		try {
 			Site site = siteService.getSite(siteId);
 			ToolConfiguration tc = site.getToolForCommonId("sakai.learninglog");
@@ -329,6 +305,7 @@ public class SakaiProxy {
 	}
 
 	public Set<Role> getSiteRoles(String siteId) {
+
 		try {
 			Site site = siteService.getSite(siteId);
 			return site.getRoles();
@@ -340,6 +317,7 @@ public class SakaiProxy {
 	}
 
 	public Role getRoleForCurrentUser(String siteId) {
+
 		try {
 			Site site = siteService.getSite(siteId);
 			return site.getUserRole(getCurrentUserId());
@@ -351,6 +329,7 @@ public class SakaiProxy {
 	}
 
 	public Set<String> getUsersInRole(String siteId, String role) {
+
 		try {
 			Site site = siteService.getSite(siteId);
 			return site.getUsersHasRole(role);
@@ -361,41 +340,21 @@ public class SakaiProxy {
 		return null;
 	}
 
-	public String getSakaiSkin() {
-		// Shouldn't have to do any of this fudging. getSiteSkin should do it.
-		String defaultSkin = serverConfigurationService.getString("skin.default", "default");
-		String siteSkin = siteService.getSiteSkin(getCurrentSiteId());
-		String templates = serverConfigurationService.getString("portal.templates", "neoskin");
-		if ("neoskin".equals(templates)) {
-			String prefix = serverConfigurationService.getString("portal.neoprefix", "neo-");
-			defaultSkin = prefix + defaultSkin;
-			if (siteSkin != null)
-				siteSkin = prefix + siteSkin;
-		}
-
-		return siteSkin != null ? siteSkin : defaultSkin;
-	}
-
 	/**
-	 * Saves the file to Sakai's content hosting
+	 * Saves the attachment to the current users my workspace resources
 	 */
-	public void addAttachment(String siteId, String creatorId, Attachment attachment) throws Exception {
+	public void addDraftAttachment(String siteId, String creatorId, Attachment attachment) throws Exception {
 		
-		int id = attachment.getId();
-		String name = attachment.getName();
-		String mimeType = attachment.getMimeType();
-		byte[] fileData = attachment.getData();
+		String name = attachment.name;
+		String mimeType = attachment.mimeType;
+		byte[] fileData = attachment.data;
 
-		if (name == null | name.length() == 0)
+		if (name == null | name.length() == 0) {
 			throw new IllegalArgumentException("The name argument must be populated.");
+		}
 		
-		String resourceId = "/group/" + siteId + "/learninglog-files/" + id;
-		
-		try {
-			contentHostingService.checkResource(resourceId);
-			// Already exists. Return.
-			return;
-		} catch (IdUnusedException idue) {}
+		// While in draft we use then name so we can allow updates to the file
+		String resourceId = "/user/" + creatorId + "/learninglog-draft-files/" + name;
 
 		if (name.endsWith(".doc"))
 			mimeType = "application/msword";
@@ -424,31 +383,33 @@ public class SakaiProxy {
 	}
 
 	public void getAttachment(String siteId, Attachment attachment) {
-		if (siteId == null)
+
+		if (siteId == null) {
 			siteId = getCurrentSiteId();
+        }
 
 		try {
 			enableSecurityAdvisor();
-			String id = "/group/" + siteId + "/learninglog-files/" + attachment.getId();
+			String dropboxCollection = contentHostingService.getDropboxCollection(siteId);
+			String id = dropboxCollection + attachment.id;
 			ContentResource resource = contentHostingService.getResource(id);
 			ResourceProperties properties = resource.getProperties();
-			attachment.setMimeType(properties.getProperty(ResourceProperties.PROP_CONTENT_TYPE));
-			attachment.setName(properties.getProperty(ResourceProperties.PROP_DISPLAY_NAME));
-			attachment.setUrl(resource.getUrl());
+			attachment.mimeType = properties.getProperty(ResourceProperties.PROP_CONTENT_TYPE);
+			attachment.name = properties.getProperty(ResourceProperties.PROP_DISPLAY_NAME);
+			attachment.url = resource.getUrl();
 		} catch (Exception e) {
-			//if (logger.isDebugEnabled())
-				e.printStackTrace();
-
+			e.printStackTrace();
 			logger.error("Caught an exception with message '" + e.getMessage() + "'");
 		} finally {
 			disableSecurityAdvisor();
 		}
 	}
 
-	public void deleteAttachment(String siteId, String id) throws Exception {
+	public void deleteAttachment(String siteId, String name) throws Exception {
+
 		enableSecurityAdvisor();
 		try {
-			String resourceId = "/group/" + siteId + "/learninglog-files/" + id;
+			String resourceId = "/user/" + userDirectoryService.getCurrentUser().getId() + "/learninglog-draft-files/" + name;
 			contentHostingService.removeResource(resourceId);
 		} finally {
 			disableSecurityAdvisor();
@@ -456,6 +417,7 @@ public class SakaiProxy {
 	}
 
 	private void enableSecurityAdvisor() {
+
 		securityService.pushAdvisor(new SecurityAdvisor() {
 
 			public SecurityAdvice isAllowed(String userId, String function, String reference) {

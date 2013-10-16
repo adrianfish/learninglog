@@ -18,24 +18,19 @@ import org.sakaiproject.learninglog.LearningLogManager;
 import org.sakaiproject.learninglog.SakaiProxy;
 import org.sakaiproject.learninglog.api.Comment;
 
-public class LearningLogCommentEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Inputable, Createable, Describeable, Deleteable
-{
+import lombok.Setter;
+
+@Setter
+public class LearningLogCommentEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Inputable, Createable, Describeable, Deleteable {
 	public final static String ENTITY_PREFIX = "learninglog-comment";
-	
-	private DeveloperHelperService developerService = null;
-	public void setDeveloperService(DeveloperHelperService developerService) {
-		this.developerService = developerService;
-	}
-	  
+
 	protected final Logger LOG = Logger.getLogger(LearningLogCommentEntityProvider.class);
 	
+	private DeveloperHelperService developerService = null;
 	private LearningLogManager learningLogManager;
 	private SakaiProxy sakaiProxy = null;
 	
 	public void init() {
-		
-		sakaiProxy = new SakaiProxy();
-		learningLogManager = new LearningLogManager(sakaiProxy);
 	}
 	
 	public String createEntity(EntityReference ref, Object entity, Map<String, Object> params) {

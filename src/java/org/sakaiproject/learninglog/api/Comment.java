@@ -19,30 +19,43 @@ package org.sakaiproject.learninglog.api;
 
 import java.util.Date;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import org.apache.commons.lang.StringEscapeUtils;
 
-public class Comment
-{
+public class Comment {
+	
+    @Getter @Setter
 	private String id = "";
-    private String content = "";
-    private long createdDate = -1L;
+    
+    @Getter @Setter
     private long modifiedDate = -1L;
+    
+    @Getter @Setter
     private String creatorId;
+    
+    @Getter @Setter
     private String creatorDisplayName;
+    
+    @Getter @Setter
     private String postId;
+    
+    @Getter
+    private String content = "";
 
-    public Comment()
-    {
+    @Getter
+    private long createdDate = -1L;
+
+    public Comment() {
     	this("");
     }
     
-    public Comment(String text)
-    {
+    public Comment(String text) {
     	this(text,new Date().getTime());
     }
     
-    public Comment(String text, long createdDate)
-    {
+    public Comment(String text, long createdDate) {
         setContent(text);
         this.createdDate = createdDate;
         modifiedDate = createdDate;
@@ -54,68 +67,20 @@ public class Comment
      * 
      * @param text
      */
-    public void setContent(String text)
-    {
+    public void setContent(String text) {
     	setContent(text,true);
     }
     
-    public void setContent(String text,boolean modified)
-    {
+    public void setContent(String text,boolean modified) {
     	if(!this.content.equals(text) && modified)
     		modifiedDate = new Date().getTime();
     	
 		this.content = StringEscapeUtils.unescapeHtml(text.trim());
     }
-    public String getContent(){
-        return content;
-    }
-    public String getCreatorId(){
-        return creatorId;
-    }
-    public void setCreatorId(String creatorId){
-        this.creatorId = creatorId;
-    }
-	public void setCreatedDate(long createdDate)
-	{
+    
+	public void setCreatedDate(long createdDate) {
+		
 		this.createdDate = createdDate;
 		this.modifiedDate = createdDate;
-	}
-	public long getCreatedDate()
-	{
-		return createdDate;
-	}
-	public void setModifiedDate(long modifiedDate)
-	{
-		this.modifiedDate = modifiedDate;
-	}
-	public long getModifiedDate()
-	{
-		return modifiedDate;
-	}
-	public void setId(String id)
-	{
-		this.id = id;
-	}
-	public String getId()
-	{
-		return id;
-	}
-	public void setPostId(String postId)
-	{
-		this.postId = postId;
-	}
-	public String getPostId()
-	{
-		return postId;
-	}
-
-	public void setCreatorDisplayName(String creatorDisplayName)
-	{
-		this.creatorDisplayName = creatorDisplayName;
-	}
-
-	public String getCreatorDisplayName()
-	{
-		return creatorDisplayName;
 	}
 }

@@ -24,22 +24,21 @@ import org.apache.log4j.Logger;
 import org.sakaiproject.learninglog.api.Post;
 import org.sakaiproject.learninglog.api.Roles;
 
-public class LearningLogSecurityManager
-{
-    private Logger logger = Logger.getLogger(LearningLogSecurityManager.class);
+import lombok.Setter;
+
+@Setter
+public class LearningLogSecurityManager {
+
+    private final Logger logger = Logger.getLogger(LearningLogSecurityManager.class);
     
 	private SakaiProxy sakaiProxy;
-	
 	private PersistenceManager persistenceManager;
 
-    public LearningLogSecurityManager(SakaiProxy sakaiProxy,PersistenceManager persistenceManager)
-    {
-    	this.sakaiProxy = sakaiProxy;
-    	this.persistenceManager = persistenceManager;
+    public void init() {
     }
 
-    public boolean canCurrentUserCommentOnPost(Post post)
-	{
+    public boolean canCurrentUserCommentOnPost(Post post) {
+
     	if(logger.isDebugEnabled()) logger.debug("canCurrentUserCommentOnPost()");
     	
 		//if(sakaiProxy.isOnGateway() && post.isPublic() && post.isCommentable())

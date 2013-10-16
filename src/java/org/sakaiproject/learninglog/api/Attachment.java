@@ -15,19 +15,21 @@
  */
 package org.sakaiproject.learninglog.api;
 
+//import lombok.Getter;
+//import lombok.Setter;
+
+//@Getter @Setter
 public class Attachment {
 	
-	private int id = -1;
-	public void setId(int id) {
-		this.id = id;
-	}
-	public int getId() {
-		return id;
-	}
-	private String url = "";
-	private String mimeType = "";
-	private transient byte[] data;
-	private String name = "";
+	public int id = -1;
+	
+	public String url = "";
+	
+	public String mimeType = "";
+	
+	public transient byte[] data;
+	
+	public String name = "";
 	
 	public Attachment(String name,String contentType, byte[] bs) {
 		this.name = name;
@@ -38,36 +40,4 @@ public class Attachment {
 	}
 	
 	public Attachment() {} 
-	
-	public void setUrl(String url) {
-		this.url = url;
-	}
-	
-	public String getUrl() {
-		return url;
-	}
-	
-	public void setMimeType(String mimeType) {
-		this.mimeType = mimeType;
-	}
-	
-	public String getMimeType() {
-		return mimeType;
-	}
-	
-	public void setData(byte[] data) {
-		this.data = data;
-	}
-	
-	public byte[] getData() {
-		return data;
-	}
-	
-	public void setName(String name) {
-		this.name = name;
-	}
-	
-	public String getName() {
-		return name;
-	}
 }

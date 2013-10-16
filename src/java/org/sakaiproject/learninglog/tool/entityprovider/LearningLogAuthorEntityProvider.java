@@ -20,21 +20,19 @@ import org.sakaiproject.learninglog.SakaiProxy;
 import org.sakaiproject.learninglog.api.BlogMember;
 import org.sakaiproject.user.api.UserDirectoryService;
 
+import lombok.Setter;
+
+@Setter
 public class LearningLogAuthorEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Outputable, Describeable, CollectionResolvable, ActionsExecutable 
 {
 	public final static String ENTITY_PREFIX = "learninglog-author";
 	
 	private LearningLogManager learningLogManager;
-	
 	private UserDirectoryService userDirectoryService = null;
-	public void setUserDirectoryService(UserDirectoryService userDirectoryService) {
-		this.userDirectoryService = userDirectoryService;
-	}
 
 	protected final Logger LOG = Logger.getLogger(LearningLogAuthorEntityProvider.class);
 	
 	public void init() {
-		learningLogManager = new LearningLogManager(new SakaiProxy());
 	}
 	
 	public boolean entityExists(String id)
