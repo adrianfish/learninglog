@@ -166,7 +166,7 @@ public class SakaiProxy {
 
 	public void registerFunction(String function) {
 
-		List functions = functionManager.getRegisteredFunctions("blog.");
+		List functions = functionManager.getRegisteredFunctions("learninglog.");
 
 		if (!functions.contains(function)) {
 			functionManager.registerFunction(function);

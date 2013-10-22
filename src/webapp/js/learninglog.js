@@ -90,10 +90,16 @@ var autosave_id = null;
 function switchState(state,args) {
 
 	$('#cluetip').hide();
+
+	$('#blog_toolbar > li > span').removeClass('current');
 	
 	if('home' === state) {
+
+	    $('#blog_home_link > span').addClass('current');
 		switchState(blogHomeState,args);
 	} else if('viewMembers' === state) {
+
+	    $('#blog_home_link > span').addClass('current');
 
 		jQuery.ajax({
 	    	url : "/direct/learninglog-author.json?siteId=" + startupArgs.blogSiteId,
@@ -146,6 +152,7 @@ function switchState(state,args) {
 			}
 	   	});
 	} else if('userPosts' === state) {
+	    $('#blog_home_link > span').addClass('current');
 
 		// Default to using the current session user id ...
 		var userId = blogCurrentUser.id;
@@ -224,8 +231,9 @@ function switchState(state,args) {
 				// This is likely under an LTI provision scenario
 			}
 	 	});
-	}
-	else if('createPost' === state) {
+	} else if('createPost' === state) {
+
+	    $('#blog_create_post_link > span').addClass('current');
 
 		var post = {id:'',title:'',content:'',commentable:true,attachments:[]};
 
@@ -343,6 +351,8 @@ function switchState(state,args) {
 		});
 	} else if('permissions' === state) {
 
+	    $('#blog_permissions_link > span').addClass('current');
+
 		var roleMapList = LearningLogUtils.parsePermissions();
 
 		SakaiUtils.renderTrimpathTemplate('blog_permissions_content_template',{'roleMapList':roleMapList},'blog_content');
@@ -362,6 +372,8 @@ function switchState(state,args) {
 			}
 		});
 	} else if('viewRecycled' === state) {
+
+	    $('#blog_recycle_bin_link > span').addClass('current');
 
 		jQuery.ajax( {
 	       	url : "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId + "&visibilities=RECYCLED",
