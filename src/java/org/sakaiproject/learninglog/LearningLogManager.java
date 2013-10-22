@@ -68,11 +68,11 @@ public class LearningLogManager {
 		return securityManager.filter(unfiltered);
 	}
 
-	public boolean savePost(Post post) {
+	public boolean savePost(Post post, boolean isPublishing) {
 
 		try {
 			if (securityManager.canCurrentUserSavePost(post)) {
-				return persistenceManager.savePost(post);
+				return persistenceManager.savePost(post, isPublishing);
 			}
 		} catch (Exception e) {
 			logger.error("Caught exception whilst creating post", e);
@@ -107,10 +107,9 @@ public class LearningLogManager {
 	}
 
 	public boolean deleteComment(String commentId) {
+
 		try {
-			if (persistenceManager.deleteComment(commentId)) {
-				return true;
-			}
+			return persistenceManager.deleteComment(commentId);
 		} catch (Exception e) {
 			logger.error("Caught exception whilst deleting comment.", e);
 		}
@@ -119,6 +118,7 @@ public class LearningLogManager {
 	}
 
 	public boolean recyclePost(String postId) {
+
 		try {
 			Post post = persistenceManager.getPost(postId);
 
@@ -136,6 +136,7 @@ public class LearningLogManager {
 	}
 
 	public List<BlogMember> getAuthors(String siteId) {
+
 		List<BlogMember> authors = sakaiProxy.getSiteMembers(siteId);
 		for (BlogMember author : authors) {
 			persistenceManager.populateAuthorData(author, siteId);
@@ -144,6 +145,7 @@ public class LearningLogManager {
 	}
 
 	public boolean restorePost(String postId) {
+
 		try {
 			return persistenceManager.restorePost(postId);
 		} catch (Exception e) {
@@ -225,7 +227,7 @@ public class LearningLogManager {
 		return llRole;
 	}
 
-	public boolean deleteAttachment(String siteId, String attachmentId, String postId) {
-		return persistenceManager.deleteAttachment(siteId, attachmentId, postId);
+	public boolean deleteAttachment(String siteId, String name, String postId) {
+		return persistenceManager.deleteAttachment(siteId, name, postId);
 	}
 }

@@ -45,6 +45,7 @@ import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.IdUsedException;
 import org.sakaiproject.learninglog.api.Attachment;
 import org.sakaiproject.learninglog.api.BlogMember;
+import org.sakaiproject.learninglog.api.Post;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.api.ToolConfiguration;
@@ -76,15 +77,7 @@ public class SakaiProxy {
 	private ContentHostingService contentHostingService;
 	private SecurityService securityService;
 	
-	public void init() {
-
-        if(toolManager == null) {
-            System.out.println("DSJKHASDKJAHSDKJHASD");
-        }
-        if(serverConfigurationService == null) {
-            System.out.println("ARGHHHHHHH");
-        }
-	}
+	public void init() {}
 
 	public String getCurrentSiteId() {
 		return toolManager.getCurrentPlacement().getContext();
@@ -232,7 +225,7 @@ public class SakaiProxy {
 						// " ...");
 						emailService.send(emailSender, emailParticipant, subject, text, emailParticipant, sender, additionalHeader);
 					} catch (Exception e) {
-						System.out.println("Failed to send email to '" + userId + "'. Message: " + e.getMessage());
+						logger.error("Failed to send email to '" + userId + "'", e);
 					}
 				}
 			}
@@ -343,56 +336,90 @@ public class SakaiProxy {
 	/**
 	 * Saves the attachment to the current users my workspace resources
 	 */
-	public void addDraftAttachment(String siteId, String creatorId, Attachment attachment) throws Exception {
+	public void addAttachments(Post post, boolean isPublishing) throws Exception {
+
+        String creatorId = post.getCreatorId();
+
+        for(Attachment attachment : post.getAttachments()) {
 		
-		String name = attachment.name;
-		String mimeType = attachment.mimeType;
-		byte[] fileData = attachment.data;
+            String name = attachment.name;
+            String mimeType = attachment.mimeType;
+            byte[] fileData = attachment.data;
 
-		if (name == null | name.length() == 0) {
-			throw new IllegalArgumentException("The name argument must be populated.");
-		}
-		
-		// While in draft we use then name so we can allow updates to the file
-		String resourceId = "/user/" + creatorId + "/learninglog-draft-files/" + name;
+            if (name == null | name.length() == 0) {
+                throw new IllegalArgumentException("The name argument must be populated.");
+            }
 
-		if (name.endsWith(".doc"))
-			mimeType = "application/msword";
-		else if (name.endsWith(".xls"))
-			mimeType = "application/excel";
+            String resourceId = ContentHostingService.COLLECTION_USER + creatorId + "/learninglog-draft-files/" + attachment.name;
 
-		try {
-			enableSecurityAdvisor();
+            if (name.endsWith(".doc")) {
+                mimeType = "application/msword";
+            } else if (name.endsWith(".xls")) {
+                mimeType = "application/excel";
+            }
 
-			ContentResourceEdit resource = contentHostingService.addResource(resourceId);
-			resource.setContentType(mimeType);
-			resource.setContent(fileData);
-			ResourceProperties props = new BaseResourceProperties();
-			props.addProperty(ResourceProperties.PROP_CONTENT_TYPE, mimeType);
-			props.addProperty(ResourceProperties.PROP_DISPLAY_NAME, name);
-			props.addProperty(ResourceProperties.PROP_CREATOR, creatorId);
-			props.addProperty(ResourceProperties.PROP_ORIGINAL_FILENAME, name);
-			resource.getPropertiesEdit().set(props);
-			contentHostingService.commitResource(resource, NotificationService.NOTI_NONE);
-		} catch (IdUsedException e) {
-			if (logger.isInfoEnabled())
-				logger.info("A resource with id '" + resourceId + "' exists already. Returning id without recreating ...");
-		} finally {
-			disableSecurityAdvisor();
-		}
+            try {
+
+                if(isPublishing) {
+
+                    try {
+                        // This may be a new attachment and thus may never have
+                        // been added to the draft files area
+                        ContentResource resource = contentHostingService.getResource(resourceId);
+                        fileData = resource.getContent();
+                        mimeType = resource.getContentType();
+                        contentHostingService.removeResource(resourceId);
+                    } catch (Exception e) { }
+
+                    // Now set the resource id to the published one.
+                    resourceId = contentHostingService.getDropboxCollection(post.getSiteId()) + attachment.name;
+                }
+
+                ContentResourceEdit resource = contentHostingService.addResource(resourceId);
+                resource.setContentType(mimeType);
+                resource.setContent(fileData);
+                ResourceProperties props = new BaseResourceProperties();
+                props.addProperty(ResourceProperties.PROP_CONTENT_TYPE, mimeType);
+                props.addProperty(ResourceProperties.PROP_DISPLAY_NAME, name);
+                props.addProperty(ResourceProperties.PROP_CREATOR, creatorId);
+                props.addProperty(ResourceProperties.PROP_ORIGINAL_FILENAME, name);
+                resource.getPropertiesEdit().set(props);
+                contentHostingService.commitResource(resource, NotificationService.NOTI_NONE);
+            } catch (IdUsedException e) {
+
+                if (logger.isInfoEnabled()) {
+                    logger.info("A resource with id '" + resourceId + "' exists already. Returning id without recreating ...");
+                }
+		    }
+        }
 	}
 
-	public void getAttachment(String siteId, Attachment attachment) {
+	public void getAttachment(Post post, Attachment attachment) {
 
-		if (siteId == null) {
-			siteId = getCurrentSiteId();
+        String creatorId = post.getCreatorId();
+
+        String currentUserId = getCurrentUserId();
+
+        String resourceId = null;
+
+        if(post.isPrivate() && creatorId.equals(currentUserId)) {
+		    resourceId = ContentHostingService.COLLECTION_USER + creatorId + "/learninglog-draft-files/" + attachment.name;
+        } else if(!post.isPrivate()) {
+
+			resourceId = contentHostingService.getDropboxCollection(post.getSiteId());
+            
+            if(creatorId.equals(currentUserId)) {
+			    resourceId += attachment.name;
+            } else {
+			    resourceId += creatorId + "/" + attachment.name;
+            }
         }
+
+        System.out.println("RESOURCE ID AT GET: " + resourceId);
 
 		try {
 			enableSecurityAdvisor();
-			String dropboxCollection = contentHostingService.getDropboxCollection(siteId);
-			String id = dropboxCollection + attachment.id;
-			ContentResource resource = contentHostingService.getResource(id);
+			ContentResource resource = contentHostingService.getResource(resourceId);
 			ResourceProperties properties = resource.getProperties();
 			attachment.mimeType = properties.getProperty(ResourceProperties.PROP_CONTENT_TYPE);
 			attachment.name = properties.getProperty(ResourceProperties.PROP_DISPLAY_NAME);
@@ -405,15 +432,37 @@ public class SakaiProxy {
 		}
 	}
 
-	public void deleteAttachment(String siteId, String name) throws Exception {
+    /**
+     * This only gets called by the post editing ui.
+     */
+	public void deleteAttachment(String name) throws Exception {
 
-		enableSecurityAdvisor();
-		try {
-			String resourceId = "/user/" + userDirectoryService.getCurrentUser().getId() + "/learninglog-draft-files/" + name;
-			contentHostingService.removeResource(resourceId);
-		} finally {
-			disableSecurityAdvisor();
-		}
+        String resourceId = ContentHostingService.COLLECTION_USER + getCurrentUserId() + "/learninglog-draft-files/" + name;
+	    contentHostingService.removeResource(resourceId);
+	}
+
+    /**
+     * This only gets called by the recycle bin ui, and only on draft posts.
+     */
+	public void deleteAttachments(Post post) throws Exception {
+
+        String creatorId = post.getCreatorId();
+        String currentUserId = getCurrentUserId();
+        String baseDropBoxResourceId = contentHostingService.getDropboxCollection(post.getSiteId()) + creatorId + "/";
+
+        for(Attachment attachment : post.getAttachments()) {
+
+            String resourceId = null;
+
+            if(post.isPrivate() && creatorId.equals(currentUserId)) {
+		        resourceId = ContentHostingService.COLLECTION_USER + creatorId + "/learninglog-draft-files/" + attachment.name;
+            } else if(!post.isPrivate()) {
+
+                resourceId = baseDropBoxResourceId + attachment.name;
+            }
+
+            contentHostingService.removeResource(resourceId);
+        }
 	}
 
 	private void enableSecurityAdvisor() {

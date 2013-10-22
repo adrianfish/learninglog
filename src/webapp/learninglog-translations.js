@@ -26,6 +26,7 @@ blog_home_label="Home";
 blog_home_tooltip="Go to the home page";
 image="Image";
 imageName="Image name";
+blog_really_delete_post_message="This will permanently delete the selected posts. Are you sure?";
 images="Images";
 index="Index";
 keywords="Keywords:";

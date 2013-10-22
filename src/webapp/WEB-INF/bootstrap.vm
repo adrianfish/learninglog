@@ -26,11 +26,10 @@
 
 <script type="text/javascript">
     var startupArgs = {
-	    isTutor:'${isTutor}',
-	    llRole:'${llRole}',
+	    isTutor:${isTutor},
 	    blogSiteId:'${siteId}',
         blogPlacementId:'${placementId}',
-        initialPostId:'${initialPostId}',
+        postId:'${postId}',
         language:'${language}',
         country:'${country}'
     };
@@ -105,7 +104,7 @@ ${sakaiHtmlHead}
                 {if attachment.name != 'array'}
                     <div id="file_${attachment_index}">
                         <span>${attachment.name}</span>
-                        <a href="#" onclick="LearningLogUtils.removeAttachment('${attachment.id}','${id}','file_${attachment_index}');" title="Delete attachment"><img src="/library/image/silk/cross.png" width="16" height="16"/></a>
+                        <a href="#" onclick="LearningLogUtils.removeAttachment('${attachment.name}','${id}','file_${attachment_index}');" title="Delete attachment"><img src="/library/image/silk/cross.png" width="16" height="16"/></a>
                         <br />
                     </div>
                 {/if}
@@ -127,7 +126,7 @@ ${sakaiHtmlHead}
 </div>
 
 <div id="blog_create_comment_template" style="display:none"><!--
-	<div id="blog_post_${postId}" style="width:100%"></div>
+    <div id="blog_post_${D}{postId}" style="width:100%"></div>
 
 	<h3>Add your comment:</h3>
 
@@ -195,10 +194,10 @@ ${sakaiHtmlHead}
 	<div class="postOuterContainer">
 		<div class="postInnerContainer">
 			<span class="postOptionsPanel">
-			{if ready && (llIsTutor || creatorId == blogCurrentUser.id)}
+			{if ready && (startupArgs.isTutor || creatorId == blogCurrentUser.id)}
 				<a href="#" title="${blog_comment_on_post_tooltip}" onClick="switchState('createComment',{postId: '${id}'});"><img src="/library/image/silk/comment_add.png" width="16" height="16" alt="Add Comment"/></a>&nbsp;
-			{/if}
-			{if (creatorId == blogCurrentUser.id && !ready) || (ready && llIsTutor)}
+            {/if}
+			{if (creatorId == blogCurrentUser.id && !ready) || (ready && startupArgs.isTutor)}
 				<a href="#" title="${blog_delete_post_tooltip}" onclick="return LearningLogUtils.recyclePost('${id}');"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete"/></a>&nbsp;
 			{/if}
 			{if !ready && creatorId === blogCurrentUser.id}
@@ -250,7 +249,7 @@ ${sakaiHtmlHead}
 							<div style="float:left;"><span>${comment.creatorDisplayName}</span><br/><span class="blog_comment_date">Created: ${comment.formattedCreatedDate}</span><br/><span class="blog_comment_date">Modified: ${comment.formattedModifiedDate}</span></div>
 						</div>
 						<div class="blog_comment_content">${comment.content}</div>
-						{if llIsTutor || comment.creatorId === blogCurrentUser.id}
+						{if startupArgs.isTutor || comment.creatorId === blogCurrentUser.id}
 							<a href="#" onclick="return LearningLogUtils.deleteComment('${comment.id}');" title="${blog_delete_comment_tooltip}"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete Comment"/></a>&nbsp;
 						{/if}
 						{if comment.creatorId === blogCurrentUser.id}

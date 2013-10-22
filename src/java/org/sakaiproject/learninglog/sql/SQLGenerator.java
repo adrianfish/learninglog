@@ -21,6 +21,7 @@ import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.sql.SQLException;
 import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
@@ -270,6 +271,10 @@ public class SQLGenerator {
 		commentST.setString(1, post.getId());
 		result.add(commentST);
 
+		PreparedStatement attachmentsST = connection.prepareStatement("DELETE FROM LL_ATTACHMENTS WHERE POST_ID = ?");
+		attachmentsST.setString(1, post.getId());
+		result.add(attachmentsST);
+
 		PreparedStatement postST = connection.prepareStatement("DELETE FROM LL_POST WHERE POST_ID = ?");
 		postST.setString(1, post.getId());
 		result.add(postST);
@@ -377,20 +382,48 @@ public class SQLGenerator {
 
 		return statements;
 	}
+
+	public PreparedStatement getPublishStatementForPost(Post post, Connection connection) throws Exception {
+
+		PreparedStatement statement = connection.prepareStatement("UPDATE LL_POST SET VISIBILITY = 'READY' WHERE POST_ID = ?");
+        statement.setString(1,post.getId());
+        return statement;
+    }
 	
+    /**
+     * This only returns insert statements for new attachments. Existing ones are not re-inserted.
+     */
 	public List<PreparedStatement> getInsertStatementsForAttachments(Post post, Connection connection) throws Exception {
+
 		List<PreparedStatement> statements = new ArrayList<PreparedStatement>();
-		for (Attachment attachment : post.getAttachments()) {
-			String insertSql = "INSERT INTO LL_ATTACHMENTS (POST_ID,NAME) VALUES(?,?)";
-			PreparedStatement attachmentPS = connection.prepareStatement(insertSql);
-			attachmentPS.setString(1, post.getId());
-			attachmentPS.setString(2, attachment.name);
-			statements.add(attachmentPS);
-		}
+        PreparedStatement testST = connection.prepareStatement("SELECT * FROM LL_ATTACHMENTS WHERE POST_ID = ? AND NAME = ?");
+
+        try {
+
+            testST.setString(1, post.getId());
+            for (Attachment attachment : post.getAttachments()) {
+                testST.setString(2, attachment.name);
+                if(!testST.executeQuery().next()) {
+
+                    String insertSql = "INSERT INTO LL_ATTACHMENTS (POST_ID,NAME) VALUES(?,?)";
+                    PreparedStatement attachmentPS = connection.prepareStatement(insertSql);
+                    attachmentPS.setString(1, post.getId());
+                    attachmentPS.setString(2, attachment.name);
+                    statements.add(attachmentPS);
+                }
+		    }
+        } finally {
+            if(testST != null) {
+                try {
+                    testST.close();
+                } catch(SQLException sqle) {}
+            }
+        }
 		return statements;
 	}
 
 	private List<PreparedStatement> getAuthorTableStatements(Post post, boolean increment, Connection connection) throws Exception {
+
 		List<PreparedStatement> statements = new ArrayList<PreparedStatement>();
 
 		Statement testST = null;
@@ -449,6 +482,7 @@ public class SQLGenerator {
 	}
 
 	public List<PreparedStatement> getDeleteStatementsForComment(String commentId, Connection connection) throws Exception {
+
 		List<PreparedStatement> statements = new ArrayList<PreparedStatement>();
 		Statement testST = null;
 
@@ -529,9 +563,9 @@ public class SQLGenerator {
 		return "SELECT * FROM LL_ATTACHMENTS WHERE POST_ID = '" + postId + "'";
 	}
 
-	public PreparedStatement getDeleteStatementForAttachment(String attachmentId, String postId, Connection connection) throws Exception {
-		PreparedStatement pst = connection.prepareStatement("DELETE FROM LL_ATTACHMENTS WHERE ID = ?");
-		pst.setString(1, attachmentId);
+	public PreparedStatement getDeleteStatementForAttachment(String name, String postId, Connection connection) throws Exception {
+		PreparedStatement pst = connection.prepareStatement("DELETE FROM LL_ATTACHMENTS WHERE NAME = ?");
+		pst.setString(1, name);
 		return pst;
 	}
 }

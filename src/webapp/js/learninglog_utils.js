@@ -1,16 +1,19 @@
 var LearningLogUtils;
 
-(function()
-{
-	if(LearningLogUtils == null)
-		LearningLogUtils = new Object();
+(function() {
 
-	LearningLogUtils.removeAttachment = function(attachmentId,postId,elementId) {
-        if(!confirm("Are you sure you want to delete this attachment?"))
+	if(LearningLogUtils == null) {
+		LearningLogUtils = new Object();
+    }
+
+	LearningLogUtils.removeAttachment = function(name,postId,elementId) {
+
+        if(!confirm("Are you sure you want to delete this attachment?")) {
             return;
+        }
 
         jQuery.ajax( {
-	 		url : "/direct/learninglog-post/" + postId + "/deleteAttachment.json?siteId=" + startupArgs.blogSiteId + "&attachmentId=" + attachmentId,
+	 		url : "/direct/learninglog-post/" + postId + "/deleteAttachment.json?siteId=" + startupArgs.blogSiteId + "&name=" + name,
             dataType : "text",
             async : false,
             cache: false,
@@ -24,6 +27,7 @@ var LearningLogUtils;
     }
 
 	LearningLogUtils.getCurrentUserRole = function() {
+
 		var role = null;
 		jQuery.ajax( {
 	 		url : "/direct/learninglog-role/" + startupArgs.blogSiteId + "/currentUserRole.json",
@@ -42,6 +46,7 @@ var LearningLogUtils;
 	}
 	
 	LearningLogUtils.showSearchResults = function(searchTerms) {
+
     	jQuery.ajax( {
 			url : "/portal/tool/" + blogPlacementId + "/search",
 			type : 'POST',
@@ -69,24 +74,25 @@ var LearningLogUtils;
 	}
 	
 	LearningLogUtils.addFormattedDatesToCurrentPosts = function () {
+
         for(var i=0,j=blogCurrentPosts.length;i<j;i++) {
-        	LearningLogUtils.addFormattedDateToPost(blogCurrentPosts[i]);
+        	LearningLogUtils.addFormattedDatesToPost(blogCurrentPosts[i]);
         }
     }
     
-    LearningLogUtils.addFormattedDateToPost = function(post) {
+    LearningLogUtils.addFormattedDatesToPost = function(post) {
 
         post.formattedCreatedDate = LearningLogUtils.formatDate(post.createdDate);
         post.formattedModifiedDate = LearningLogUtils.formatDate(post.modifiedDate);
 
-        for(var k=0,m=post.comments.length;k<m;k++) {
-            post.comments[k].formattedCreatedDate = LearningLogUtils.formatDate(post.comments[k].createdDate);
-            post.comments[k].formattedModifiedDate = LearningLogUtils.formatDate(post.comments[k].modifiedDate);
+        for(var i=0,j=post.comments.length;i<j;i++) {
+            post.comments[i].formattedCreatedDate = LearningLogUtils.formatDate(post.comments[i].createdDate);
+            post.comments[i].formattedModifiedDate = LearningLogUtils.formatDate(post.comments[i].modifiedDate);
         }
     }
     
     LearningLogUtils.addFormattedDatesToCurrentPost = function () {
-    	LearningLogUtils.addFormattedDateToPost(blogCurrentPost);
+    	LearningLogUtils.addFormattedDatesToPost(blogCurrentPost);
 	}
 
     LearningLogUtils.formatDate = function(longDate) {
@@ -97,6 +103,14 @@ var LearningLogUtils;
         var minutes = d.getMinutes();
         if(minutes < 10) minutes = '0' + minutes;
         return d.getDate() + " " + blog_month_names[d.getMonth()] + " " + d.getFullYear() + " @ " + hours + ":" + minutes;
+    }
+
+    LearningLogUtils.addEscapedCreatorIdsToComments = function(post) {
+
+        var comments = post.comments;
+        for(var i=0,j=comments.length;i<j;i++) {
+            comments[i].escapedCreatorId = escape(comments[i].creatorId);
+        }
     }
 	
 	LearningLogUtils.attachProfilePopup = function() {
@@ -134,6 +148,7 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.parsePermissions = function() {
+
 		var roleMapList = [];
 		
 		jQuery.ajax({
@@ -155,6 +170,7 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.savePermissions = function() {
+
 		var boxes = $('.blog_role_radiobutton:checked');
 		var myData = {'siteId':startupArgs.blogSiteId};
 
@@ -248,8 +264,10 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.recyclePost = function(postId) {
-		if(!confirm(blog_delete_post_message))
+
+		if(!confirm(blog_delete_post_message)) {
 			return false;
+        }
 
 		jQuery.ajax( {
 	 		url : "/direct/learninglog-post/" + postId + "/recycle",
@@ -268,19 +286,28 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.deleteSelectedPosts = function() {
+	
+		if(!confirm(blog_really_delete_post_message)) {
+			return false;
+		}
+		
 		var selected = $('.blog_recycled_post_checkbox:checked');
 
-		var commands = '';
+        if(selected.length <= 0) {
+            // No posts selected for deletion
+            return;
+        }
+        
+		var postIds = '';
 
 		for(var i=0,j=selected.length;i<j;i++) {
-			commands += "/direct/learninglog-post/" + selected[i].id + "?siteId=" + startupArgs.blogSiteId;
-			if(i < (j - 1)) commands += ",";
+			postIds += selected[i].id;
+			if(i < (j - 1)) postIds += ",";
 		}
 
 		jQuery.ajax( {
-	 		url : "/direct/batch?_refs=" + commands,
+	 		url : "/direct/learninglog-post/remove?posts=" + postIds + "&site=" + startupArgs.blogSiteId,
 			dataType : 'text',
-			type:'DELETE',
 			async : false,
 		   	success : function(result) {
 				switchState('home');
@@ -294,17 +321,23 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.restoreSelectedPosts = function() {
+
 		var selected = $('.blog_recycled_post_checkbox:checked');
 
-		var commands = '';
+        if(selected.length <= 0) {
+            // No posts selected for restoration
+            return;
+        }
+
+		var postIds = '';
 
 		for(var i=0,j=selected.length;i<j;i++) {
-			commands += "/direct/learninglog-post/" + selected[i].id + "/restore";
-			if(i < (j - 1)) commands += ",";
+			postIds += selected[i].id;
+			if(i < (j - 1)) postIds += ",";
 		}
 
 		jQuery.ajax( {
-	 		url : "/direct/batch?_refs=" + commands,
+	 		url : "/direct/learninglog-post/restore?posts=" + postIds,
 			dataType : 'text',
 			async : false,
 		   	success : function(result) {
@@ -319,6 +352,7 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.getCurrentUserPermissions = function() {
+
 		var permissions = null;
 		jQuery.ajax( {
 	 		url : "/direct/site/" + startupArgs.blogSiteId + "/userPerms/learninglog.json",
@@ -337,9 +371,11 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.findPost = function(postId) {
+
 		var post = null;
 		
 		if(!blogCurrentPosts) {
+
 			jQuery.ajax( {
 	 			url : "/direct/learninglog-post/" + postId + ".json",
 	   			dataType : "json",
@@ -352,11 +388,12 @@ var LearningLogUtils;
 					alert("Failed to get the post. Status: " + stat + ". Error: " + error);
 				}
 	  		});
-	  	}
-		else {
+	  	} else {
+
 			for(var i=0,j=blogCurrentPosts.length;i<j;i++) {
-				if(blogCurrentPosts[i].id === postId)
+				if(blogCurrentPosts[i].id === postId) {
 					post = blogCurrentPosts[i];
+                }
 			}
 		}
 
@@ -364,8 +401,10 @@ var LearningLogUtils;
 	}
 
 	LearningLogUtils.deleteComment = function(commentId) {
-		if(!confirm(blog_delete_comment_message))
+
+		if(!confirm(blog_delete_comment_message)) {
 			return false;
+        }
 		
 		jQuery.ajax( {
 	 		url : "/direct/learninglog-comment/" + commentId + "?siteId=" + startupArgs.blogSiteId,

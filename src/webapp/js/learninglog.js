@@ -4,17 +4,12 @@ var blogCurrentPost = null;
 var blogCurrentPosts = null;
 var blogCurrentUser = null;
 var blogHomeState = null;
-var blogTextAreaChanged = false;
-
-var llIsTutor = false;
-
-var blogBaseDataUrl = "";
 
 var autosave_id = null;
 
 (function() {
 
-    llIsTutor = startupArgs.isTutor === 'true';
+    var llIsTutor = startupArgs.isTutor;
 
 	// We need the toolbar in a template so we can swap in the translations
 	SakaiUtils.renderTrimpathTemplate('blog_toolbar_template',{},'blog_toolbar');
@@ -34,6 +29,12 @@ var autosave_id = null;
 	$('#blog_recycle_bin_link > span > a').click(function(e) {
 		return switchState('viewRecycled');
 	});
+
+	if(!llIsTutor) {
+		$("#blog_create_post_link").show();
+    } else {
+		$("#blog_create_post_link").hide();
+    }
 
 	$('#blog_search_field').change(LearningLogUtils.showSearchResults);
 
@@ -56,7 +57,7 @@ var autosave_id = null;
 
     var initialState = blogHomeState;
 
-    if(startupArgs.initialPostId != 'none') {
+    if(startupArgs.postId != 'none') {
         initialState = 'post';
     }
 	
@@ -83,21 +84,15 @@ var autosave_id = null;
 	}
 	
 	// Now switch into the requested state
-	switchState(initialState,{});
+	switchState(initialState,startupArgs);
 })();
 
-function switchState(state,arg) {
+function switchState(state,args) {
 
 	$('#cluetip').hide();
-
-	if(!llIsTutor) {
-		$("#blog_create_post_link").show();
-    } else {
-		$("#blog_create_post_link").hide();
-    }
 	
 	if('home' === state) {
-		switchState(blogHomeState,arg);
+		switchState(blogHomeState,args);
 	} else if('viewMembers' === state) {
 
 		jQuery.ajax({
@@ -151,12 +146,13 @@ function switchState(state,arg) {
 			}
 	   	});
 	} else if('userPosts' === state) {
+
 		// Default to using the current session user id ...
 		var userId = blogCurrentUser.id;
 		
 		// ... but override it with any supplied one
-		if(arg && arg.userId)
-			userId = arg.userId;
+		if(args && args.userId)
+			userId = args.userId;
 
 		var url = "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId + "&creatorId=" + userId;
 
@@ -177,10 +173,7 @@ function switchState(state,arg) {
 				SakaiUtils.renderTrimpathTemplate('blog_user_posts_template',{'creatorId':userId,'posts':blogCurrentPosts},'blog_content');
 				$('#blog_author_profile').html(profileMarkup);
 	 			for(var i=0,j=blogCurrentPosts.length;i<j;i++) {
-	 				var comments = blogCurrentPosts[i].comments;
-	 				for(var k=0,m=comments.length;k<m;k++) {
-	 					comments[k].escapedCreatorId = escape(comments[k].creatorId);
-	 				}
+                    LearningLogUtils.addEscapedCreatorIdsToComments(blogCurrentPosts[i]);
 					SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPosts[i],'post_' + blogCurrentPosts[i].id);
                 }
 
@@ -198,16 +191,19 @@ function switchState(state,arg) {
 				alert("Failed to get posts. Reason: " + errorThrown);
 			}
 	   	});
-	}
-	else if('post' === state) {
-		if(arg && arg.postId)
-			blogCurrentPost = LearningLogUtils.findPost(arg.postId);
+	} else if('post' === state) {
 
-		if(!blogCurrentPost)
+		if(args && args.postId) {
+			blogCurrentPost = LearningLogUtils.findPost(args.postId);
+        }
+
+		if(!blogCurrentPost) {
 			return false;
+        }
 			
 		LearningLogUtils.addFormattedDatesToCurrentPost();
-	 			
+        LearningLogUtils.addEscapedCreatorIdsToComments(blogCurrentPost);
+
 		SakaiUtils.renderTrimpathTemplate('blog_post_page_content_template',blogCurrentPost,'blog_content');
 		SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPost,'post_' + blogCurrentPost.id);
 
@@ -230,10 +226,12 @@ function switchState(state,arg) {
 	 	});
 	}
 	else if('createPost' === state) {
+
 		var post = {id:'',title:'',content:'',commentable:true,attachments:[]};
 
-		if(arg && arg.postId)
-			post = LearningLogUtils.findPost(arg.postId);
+		if(args && args.postId) {
+			post = LearningLogUtils.findPost(args.postId);
+        }
 
 		SakaiUtils.renderTrimpathTemplate('blog_create_post_template',post,'blog_content');
 
@@ -313,23 +311,21 @@ function switchState(state,arg) {
 					LearningLogUtils.savePostAsDraft(true);
 				},10000);
 	 	});
-	}
-	else if('createComment' === state) {
+	} else if('createComment' === state) {
 	
-		if(!arg || !arg.postId) {
+		if(!args || !args.postId) {
 			return;
         }
 
+		blogCurrentPost = LearningLogUtils.findPost(args.postId);
 
-		blogCurrentPost = LearningLogUtils.findPost(arg.postId);
+		var comment = {id: '',postId: args.postId,content: ''};
 
-		var comment = {id: '',postId: arg.postId,content: ''};
-
-		if(arg.commentId) {
+		if(args.commentId) {
 			var comments = blogCurrentPost.comments;
 
 			for(var i=0,j=comments.length;i<j;i++) {
-				if(comments[i].id == arg.commentId) {
+				if(comments[i].id == args.commentId) {
 					comment = comments[i];
 					break;
 				}
@@ -339,13 +335,14 @@ function switchState(state,arg) {
 		SakaiUtils.renderTrimpathTemplate('blog_create_comment_template',comment,'blog_content');
 
 		$(document).ready(function() {
-			SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPost,'blog_post_' + arg.postId);
+
+			SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPost,'blog_post_' + args.postId);
 			$('#blog_save_comment_button').click(LearningLogUtils.saveComment);
 			
  			SakaiUtils.setupWysiwygEditor('blog_content_editor',600,400,'Default',startupArgs.blogSiteId);
 		});
-	}
-	else if('permissions' === state) {
+	} else if('permissions' === state) {
+
 		var roleMapList = LearningLogUtils.parsePermissions();
 
 		SakaiUtils.renderTrimpathTemplate('blog_permissions_content_template',{'roleMapList':roleMapList},'blog_content');
@@ -364,8 +361,8 @@ function switchState(state,arg) {
 				// This is likely under an LTI provision scenario
 			}
 		});
-	}
-	else if('viewRecycled' === state) {
+	} else if('viewRecycled' === state) {
+
 		jQuery.ajax( {
 	       	url : "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId + "&visibilities=RECYCLED",
 	       	dataType : "json",
@@ -376,8 +373,11 @@ function switchState(state,arg) {
 				var posts = data['learninglog-post_collection'];
 	 			
 				SakaiUtils.renderTrimpathTemplate('blog_recycled_posts_template',{'posts':posts},'blog_content');
-	 			for(var i=0,j=posts.length;i<j;i++)
+	 			for(var i=0,j=posts.length;i<j;i++) {
+                    LearningLogUtils.addFormattedDatesToPost(posts[i]);
+                    LearningLogUtils.addEscapedCreatorIdsToComments(posts[i]);
 					SakaiUtils.renderTrimpathTemplate('blog_post_template',posts[i],'post_' + posts[i].id);
+                }
 
 				$('#blog_really_delete_button').click(LearningLogUtils.deleteSelectedPosts);
 				$('#blog_restore_button').click(LearningLogUtils.restoreSelectedPosts);
@@ -399,10 +399,11 @@ function switchState(state,arg) {
 	}
 }
 
-function toggleFullContent(v)
-{
+function toggleFullContent(v) {
 	try {
+
  		if(window.frameElement) {
+
 			$(document).ready(function() {
  				setMainFrameHeight(window.frameElement.id);
 			});
@@ -412,10 +413,11 @@ function toggleFullContent(v)
 	}
 	
 	if(v.checked) {
+
 		$('.content').hide();
 		$('.comments').hide();
-	}
-	else {
+	} else {
+
 		$('.content').show();
 		$('.comments').show();
 	}

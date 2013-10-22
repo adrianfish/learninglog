@@ -22,6 +22,7 @@ import lombok.Setter;
 
 @Setter
 public class LearningLogCommentEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Inputable, Createable, Describeable, Deleteable {
+
 	public final static String ENTITY_PREFIX = "learninglog-comment";
 
 	protected final Logger LOG = Logger.getLogger(LearningLogCommentEntityProvider.class);
@@ -85,8 +86,8 @@ public class LearningLogCommentEntityProvider extends AbstractEntityProvider imp
         return new String[] { Formats.HTML, Formats.JSON, Formats.FORM };
     }
 
-	public void deleteEntity(EntityReference ref, Map<String, Object> params)
-	{
+	public void deleteEntity(EntityReference ref, Map<String, Object> params) {
+
 		if(LOG.isDebugEnabled()) LOG.debug("deleteEntity");
 		
 		String siteId = (String) params.get("siteId");
@@ -96,6 +97,6 @@ public class LearningLogCommentEntityProvider extends AbstractEntityProvider imp
 	}
 
 	public boolean entityExists(String id) {
-		return false;
+		return true;
 	}
 }

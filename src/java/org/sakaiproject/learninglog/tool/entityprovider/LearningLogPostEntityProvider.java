@@ -8,6 +8,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 
+import javax.servlet.http.HttpServletResponse;
+
 import org.apache.commons.fileupload.FileItem;
 import org.apache.log4j.Logger;
 import org.sakaiproject.entitybroker.DeveloperHelperService;
@@ -131,13 +133,31 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 		post.setAttachments(getAttachments(params));
 		post.isAutosave = (isAutosave.equals("yes")) ? true : false;
 
+
 		String toolId = sakaiProxy.getLearningLogToolId(siteId);
 		post.setUrl(sakaiProxy.getServerUrl() + "/portal/directtool/" + toolId + "?state=post&postId=" + id);
 		
 		boolean isNew = "".equals(post.getId());
+		boolean isPublishing = mode != null && "publish".equals(mode);
 
-		if (learningLogManager.savePost(post)) {
-			if((isNew || (mode != null && "publish".equals(mode))) && post.isReady()) {
+        if(isPublishing) {
+            // Make sure we merge in all the previously uploaded attachments, otherwise
+            // they won't get moved into the current user's dropbox
+            try {
+                Post storedPost = learningLogManager.getPost(id);
+                List<Attachment> allAttachments = post.getAttachments();
+                allAttachments.addAll(storedPost.getAttachments());
+                post.setAttachments(allAttachments);
+            } catch (Exception e) {
+
+            }
+        }
+
+		if (learningLogManager.savePost(post, isPublishing)) {
+
+			if((isNew || isPublishing) && post.isReady()) {
+
+                // This is for sitestats purposes.
 				String reference = LearningLogManager.REFERENCE_ROOT + "/" + siteId + "/post/" + post.getId();
 				sakaiProxy.postEvent(LearningLogManager.BLOG_POST_CREATED,reference,post.getSiteId());
 				
@@ -322,42 +342,6 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 		}
 	}
 	
-	@EntityCustomAction(action = "restore", viewKey = EntityView.VIEW_SHOW)
-	public String handleRestore(EntityReference ref)
-	{
-		String postId = ref.getId();
-		
-		if (postId == null)
-		{
-			throw new IllegalArgumentException("Invalid path provided: expect to receive the post id");
-		}
-		
-		Post post = null;
-		
-		try
-		{
-			post = learningLogManager.getPost(postId);
-		}
-		catch(Exception e)
-		{
-		}
-		
-		if(post == null)
-			throw new IllegalArgumentException("Invalid post id");
-		
-		if(learningLogManager.restorePost(postId))
-		{
-			String reference = LearningLogManager.REFERENCE_ROOT + "/" + post.getSiteId() + "/post/" + ref.getId();
-			sakaiProxy.postEvent(LearningLogManager.BLOG_POST_RESTORED,reference,post.getSiteId());
-			
-			return "SUCCESS";
-		}
-		else
-		{
-			return "FAIL";
-		}
-	}
-	
 	@EntityCustomAction(action = "deleteAttachment", viewKey = EntityView.VIEW_SHOW)
 	public String handleDeleteAttachment(EntityReference ref, Map<String,Object> params) {
 		
@@ -373,17 +357,93 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			throw new IllegalArgumentException("Invalid parameters provided: expect to receive the site id as a parameter named 'siteId'");
 		}
 		
-		String attachmentId = (String) params.get("attachmentId");
+		String name = (String) params.get("name");
 		
-		if (attachmentId == null) {
-			throw new IllegalArgumentException("Invalid parameters provided: expect to receive the attachment id as a parameter named 'attachmentId'");
+		if (name == null) {
+			throw new IllegalArgumentException("Invalid parameters provided: expect to receive the attachment name as a parameter named 'name'");
 		}
 		
-		if(learningLogManager.deleteAttachment(siteId, attachmentId,postId)) {
+		if(learningLogManager.deleteAttachment(siteId, name, postId)) {
 			return "SUCCESS";
 		} else {
 			return "FAIL";
 		}
+	}
+
+	@EntityCustomAction(action = "restore", viewKey = EntityView.VIEW_LIST)
+	public String handleRestore(EntityView view, Map<String,Object> params) {
+		
+		String userId = developerHelperService.getCurrentUserId();
+		
+		if(userId == null) {
+			throw new EntityException("You must be logged in to restore posts","",HttpServletResponse.SC_UNAUTHORIZED);
+		}
+		
+		if(!params.containsKey("posts")) {
+			throw new EntityException("Bad request: a posts param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
+		}
+		
+		String postIdsString = (String) params.get("posts");
+		
+		String[] postIds = postIdsString.split(",");
+		
+		for(String postId : postIds) {
+
+			Post post = null;
+
+			try {
+				post = learningLogManager.getPost(postId);
+			} catch (Exception e) {
+				LOG.error("Failed to retrieve post with id '" + postId + "' during restore operation. Skipping restore ...",e);
+				continue;
+			}
+
+			if (post == null) {
+				LOG.info("Post id '" + postId + "' is invalid. Skipping restore ...");
+				continue;
+			}
+
+			if (learningLogManager.restorePost(postId)) {
+				String reference = LearningLogManager.REFERENCE_ROOT + "/" + post.getSiteId() + "/posts/" + postId;
+				sakaiProxy.postEvent(LearningLogManager.BLOG_POST_RESTORED, reference, post.getSiteId());
+			}
+		}
+		
+		return "SUCCESS";
+	}
+
+	@EntityCustomAction(action = "remove", viewKey = EntityView.VIEW_LIST)
+	public String handleRemove(EntityView view, Map<String,Object> params) {
+		
+		String userId = developerHelperService.getCurrentUserId();
+		
+		if(userId == null) {
+			throw new EntityException("You must be logged in to delete posts","",HttpServletResponse.SC_UNAUTHORIZED);
+		}
+		
+		if(!params.containsKey("posts")) {
+			throw new EntityException("Bad request: a posts param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
+		}
+		
+		String siteId = (String) params.get("site");
+		
+		if(siteId == null) {
+			throw new EntityException("Bad request: a site param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
+		}
+		
+		String postIdsString = (String) params.get("posts");
+		
+		String[] postIds = postIdsString.split(",");
+		
+		for(String postId : postIds) {
+
+			if (learningLogManager.deletePost(postId)) {
+				String reference = LearningLogManager.REFERENCE_ROOT + "/" + siteId + "/posts/" + postId;
+				sakaiProxy.postEvent(LearningLogManager.BLOG_POST_DELETED, reference, siteId);
+			}
+		}
+		
+		return "SUCCESS";
 	}
 
 	/**

@@ -200,6 +200,7 @@ public class PersistenceManager {
 		List<PreparedStatement> statements = null;
 
 		try {
+
 			connection = sakaiProxy.borrowConnection();
 			boolean oldAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
@@ -207,8 +208,10 @@ public class PersistenceManager {
 			try {
 
 				statements = sqlGenerator.getDeleteStatementsForComment(commentId, connection);
-				for (PreparedStatement st : statements)
+
+				for (PreparedStatement st : statements) {
 					st.executeUpdate();
+                }
 
 				connection.commit();
 
@@ -236,14 +239,14 @@ public class PersistenceManager {
 		return false;
 	}
 
-	public boolean savePost(Post post) {
+	public boolean savePost(Post post, boolean isPublishing) {
 
 		Connection connection = null;
 		List<PreparedStatement> statements = null;
 		List<PreparedStatement> attachmentStatements = null;
-		Statement lastIdSt = null;
 
 		try {
+
 			connection = sakaiProxy.borrowConnection();
 			boolean oldAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
@@ -256,23 +259,13 @@ public class PersistenceManager {
 					st.executeUpdate();
 				}
 				
-				lastIdSt = connection.createStatement();
-				
 				attachmentStatements = sqlGenerator.getInsertStatementsForAttachments(post, connection);
 				
-				Iterator<Attachment> attachmentIterator = post.getAttachments().iterator();
-				
 				for (PreparedStatement st : attachmentStatements) {
-					Attachment attachment = attachmentIterator.next();
-					if(st.executeUpdate() == 1) {
-						ResultSet rs = lastIdSt.executeQuery("SELECT LAST_INSERT_ID()");
-						if(!rs.next()) {
-							// Badness
-						}
-						attachment.id = rs.getInt(1);
-						sakaiProxy.addDraftAttachment(post.getSiteId(), post.getCreatorId(), attachment);
-					}
+                    st.executeUpdate();
 				}
+
+                sakaiProxy.addAttachments(post, isPublishing);
 
 				connection.commit();
 
@@ -294,6 +287,14 @@ public class PersistenceManager {
 				}
 			}
 
+			if (attachmentStatements != null) {
+				for (PreparedStatement st : attachmentStatements) {
+					try {
+						st.close();
+					} catch (SQLException e) {}
+				}
+			}
+
 			sakaiProxy.returnConnection(connection);
 		}
 
@@ -306,15 +307,20 @@ public class PersistenceManager {
 		List<PreparedStatement> statements = null;
 
 		try {
+
 			connection = sakaiProxy.borrowConnection();
 			boolean oldAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
 
 			try {
+
 				statements = sqlGenerator.getDeleteStatementsForPost(post, connection);
 
-				for (PreparedStatement st : statements)
+				for (PreparedStatement st : statements) {
 					st.executeUpdate();
+                }
+
+                sakaiProxy.deleteAttachments(post);
 
 				connection.commit();
 
@@ -395,9 +401,13 @@ public class PersistenceManager {
 
 			try {
 				statements = sqlGenerator.getRestoreStatementsForPost(post, connection);
-				for (PreparedStatement st : statements)
+
+				for (PreparedStatement st : statements) {
 					st.executeUpdate();
+                }
+
 				connection.commit();
+
 				return true;
 			} catch (Exception e) {
 				logger.error("Caught exception whilst recycling post. Rolling back ...", e);
@@ -578,7 +588,7 @@ public class PersistenceManager {
 						attachment.id = id;
 						attachment.name = name;
 
-						sakaiProxy.getAttachment(post.getSiteId(), attachment);
+						sakaiProxy.getAttachment(post, attachment);
 
 						attachments.add(attachment);
 					}
@@ -813,7 +823,7 @@ public class PersistenceManager {
 		return false;
 	}
 
-	public boolean deleteAttachment(String siteId, String attachmentId, String postId) {
+	public boolean deleteAttachment(String siteId, String name, String postId) {
 
 		Connection connection = null;
 		PreparedStatement statement = null;
@@ -824,10 +834,10 @@ public class PersistenceManager {
 			connection.setAutoCommit(false);
 
 			try {
-				statement = sqlGenerator.getDeleteStatementForAttachment(attachmentId, postId, connection);
+				statement = sqlGenerator.getDeleteStatementForAttachment(name, postId, connection);
 				statement.executeUpdate();
 
-				sakaiProxy.deleteAttachment(siteId, attachmentId);
+				sakaiProxy.deleteAttachment(name);
 
 				connection.commit();
 

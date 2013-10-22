@@ -117,7 +117,7 @@ public class LearningLogTool extends HttpServlet {
         ctx.put("siteId",siteId);
         ctx.put("isTutor",isTutor ? "true" : "false");
         ctx.put("placementId",placementId);
-        ctx.put("initialPostId",postId);
+        ctx.put("postId",postId);
         ctx.put("isolanguage",isoLanguage);
         ctx.put("language",language);
         ctx.put("country",country);

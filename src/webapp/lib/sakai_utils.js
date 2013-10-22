@@ -1,11 +1,13 @@
 var SakaiUtils;
 
-(function()
-{
-	if(SakaiUtils == null)
+(function() {
+
+	if(SakaiUtils == null) {
 		SakaiUtils = new Object();
+    }
 		
 	SakaiUtils.getCurrentUser = function() {
+
 		var user = null;
 		jQuery.ajax( {
 	 		url : "/direct/user/current.json",
@@ -24,6 +26,7 @@ var SakaiUtils;
 	}
 
 	SakaiUtils.getProfileMarkup = function(userId) {
+
 		var profile = '';
 
 		jQuery.ajax( {
