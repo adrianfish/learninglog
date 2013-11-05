@@ -1,0 +1,410 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+        "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+        
+<html
+      xmlns="http://www.w3.org/1999/xhtml"
+      xml:lang="${isolanguage}"
+      lang="${isolanguage}">
+<head>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery-ui.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/trimpath-template-latest.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/sakai_utils.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.localisation.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.cluetip.min.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.min.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/learninglog-tool/js/learninglog_utils.js"></script>
+<script type="text/javascript" src="/learninglog-tool/learninglog-translations.js"></script>
+<script type="text/javascript" src="/learninglog-tool/js/learninglog_permissions.js"></script>
+<script type="text/javascript" src="/profile2-tool/javascript/profile2-eb.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.MultiFile.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.form.js"></script>
+<link rel="stylesheet" type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" media="all" />
+<link href="/profile2-tool/css/profile2-profile-entity.css" type="text/css" rel="stylesheet" media="all" />
+<link rel="stylesheet" type="text/css" href="/learninglog-tool/css/learninglog.css" media="all" />
+
+<script type="text/javascript">
+    var startupArgs = {
+	    isTutor:${isTutor},
+	    blogSiteId:'${siteId}',
+        blogPlacementId:'${placementId}',
+        postId:'${postId}',
+        language:'${language}',
+        country:'${country}'
+    };
+</script>
+${sakaiHtmlHead}
+</head>
+<body>
+
+<div class="portletBody">
+
+<ul id="blog_toolbar" class="navIntraTool actionToolBar" role="menu"></ul>
+
+<div id="blogMainContainer">
+	<div id="blog_content"></div>
+</div>
+
+<!--  Templates Start -->
+
+<div id="blog_toolbar_template" style="display: none;"><!--
+    <li id="blog_home_link" class="firstToolBarItem" role="menuitem"><span class="current"><a title="${blog_home_tooltip}" href="javascript:;">${blog_home_label}</a></span></li>
+    <li id="blog_create_post_link" role="menuitem"><span><a title="${blog_create_post_tooltip}" href="javascript:;">${blog_create_post_label}</a></span></li>
+    <li id="blog_permissions_link" role="menuitem"><span><a title="${blog_permissions_tooltip}" href="javascript:;">${blog_permissions_label}</a></span></li>
+    <li id="blog_recycle_bin_link" role="menuitem"><span><a title="${blog_recycle_bin_tooltip}" href="javascript:;">${blog_recycle_bin_label}</a></span></li>
+-->
+</div>
+
+<div id="blog_permissions_content_template" style="display:none"><!--
+<span id="blog_feedback_text"></span>
+<form>
+{for roleMap in roleMapList}
+	<h4>${roleMap.sakaiRole}</h4>
+	<br />
+	<input class="blog_role_radiobutton" id="blog_${roleMap.sakaiRole}_Student_button" type="radio" name="${roleMap.sakaiRole}" value="Student"{if roleMap.llRole === 'Student'} checked{/if}/>Student
+	<br />
+	<input class="blog_role_radiobutton" id="blog_${roleMap.sakaiRole}_Tutor_button" type="radio" name="${roleMap.sakaiRole}" value="Tutor"{if roleMap.llRole === 'Tutor'} checked{/if}/>Tutor
+{/for}
+<br />
+<br />
+<input id="blog_permissions_save_button" type="button" value="${save}"/>
+<input id="blog_permissions_cancel_button" type="button" value="${cancel}"/>
+</form>
+-->
+</div>
+
+<div id="blog_create_post_template" style="display:none"><!--
+	<h2>${blog_post_editor_label}</h2>
+
+	<div style="height: 20px;"></div>
+	
+	<form id="ll_post_form" action="/direct/learninglog-post/new" method="POST">
+    	<input id="blog_post_id_field" name="id" type="hidden" value="${id}"/>
+    	<input id="blog_visibility_field" name="visibility" type="hidden"/>
+    	<input id="blog_autosave_field" name="isAutosave" type="hidden" value="no"/>
+		<table cols="2">
+			<tbody>
+				<tr>
+					<td><span style="font-weight: bold;">${blog_title_label}</span></td>
+					<td><input type="text" id="blog_title_field" name="title" value="${title}"/></td>
+				</tr>
+			</tbody>
+		</table>
+   		<br />
+		<span style="font-weight: bold;">${blog_content_label}</span>
+		<br />
+		<textarea name="content" cols="45" rows="10" id="blog_content_editor">${content}</textarea>
+        <br />
+        <div id="attachments-area" style="display: none;">
+            <span id="current_attachments_label">Current attachments:</span>
+            <br />
+            <br />
+            {for attachment in attachments}
+                {if attachment.name != 'array'}
+                    <div id="file_${attachment_index}">
+                        <span>${attachment.name}</span>
+                        <a href="#" onclick="LearningLogUtils.removeAttachment('${attachment.name}','${id}','file_${attachment_index}');" title="Delete attachment"><img src="/library/image/silk/cross.png" width="16" height="16"/></a>
+                        <br />
+                    </div>
+                {/if}
+            {/for}
+        </div>
+        <br />
+		<span>Add attachments:</span>
+		<br />
+		<input id="ll_attachment" name="attachment" type="file" class="multi"/><br clear="all"/>
+		<br />
+    	<input id="blog_site_id_field" name="siteId" type="hidden" value="${startupArgs.blogSiteId}"/>
+    	<input id="blog_mode_field" name="mode" type="hidden"/>
+    	<input id="blog_publish_post_button" type="button" value="Publish" title="Publishing will make this post visible to others"/>
+    	<input id="blog_save_post_button" type="button" value="Save as Draft" title="Saving as Draft will save your changes but will not make those changes visible to others"/>
+    	<input id="blog_cancel_button" type="button" value="Cancel"/>
+	    <span id="learninglog_autosaved_message">${learninglog_autosaved_message_label}</span>
+    </form>
+-->
+</div>
+
+<div id="blog_create_comment_template" style="display:none"><!--
+    <div id="blog_post_${D}{postId}" style="width:100%"></div>
+
+	<h3>Add your comment:</h3>
+
+	<div style="height: 20px;"></div>
+
+	<textarea name="text" id="blog_content_editor" cols="45" rows="10">${content}</textarea>
+	<br />
+	<br />
+    <input id="blog_comment_id_field" type="hidden" value="${id}"/>
+    <input id="blog_save_comment_button" type="button" value="${save}"/>
+    <input type="button" value="${cancel}" onclick="switchState('home');"/>
+-->
+</div>
+
+<div id="blog_authors_content_template" style="display:none"><!--
+	<h2>${blog_authors_label}</h2>
+	<div id="blogBloggerPager">
+	<form>
+		<img class="first" src="/library/image/silk/control_start_blue.png"/>
+		<img class="prev" src="/library/image/silk/control_rewind_blue.png"/>
+		<input class="pagedisplay" type="text"/>
+		<img class="next" src="/library/image/silk/control_fastforward_blue.png"/>
+		<img class="last" src="/library/image/silk/control_end_blue.png"/>
+		<select class="pagesize">
+			<option selected="selected"  value="10">10</option>
+			<option value="20">20</option>
+			<option value="30">30</option>
+			<option  value="40">40</option>
+		</select>
+		
+	</form>
+	</div>
+    <table id="blog_author_table" cols="5" class="listHier speciallistHier">
+		<thead>
+		<tr>
+			<th width="20%"><div>${blog_author_label}</div></th>
+			<th width="10%"><div>${posts}</div></th>
+			<th width="20%"><div>${dateOfLastPostHeader}</div></th>
+			<th width="25%"><div>${blog_number_of_comments_label}</div></th>
+			<th width="25%"><div>${blog_last_comment_date_label}</div></th>
+		</tr>
+		</thead>
+		<tbody>
+            {for m in authors}
+		<tr>
+			<td><img src="/library/image/silk/user.png" width="16" height="16" alt="User"/>&nbsp;<a href="javascript:;" onclick="switchState('userPosts',{userId:'${m.userId}'});" rel="/direct/profile/${m.userId}/formatted" class="showPostsLink">${m.userDisplayName}</a></td>
+			<td>${m.numberOfPosts}</td>
+			<td>${m.formattedDateOfLastPost}</td>
+			<td>${m.numberOfComments}</td>
+            <td>${m.formattedDateOfLastComment} - ${m.lastCommentCreator}</td>
+		</tr>
+		{/for}
+		</tbody>
+	</table>
+-->
+</div>
+
+<div id="blog_post_page_content_template" style="display:none"><!--
+	<a id="blog_user_posts_link" href="javascript:;">${creatorDisplayName}'s Posts</a>
+	<div id="post_${id}" style="width:100%"></div>
+-->
+</div>
+
+<div id="blog_post_template" style="display:none"><!--
+	<div class="postOuterContainer">
+		<div class="postInnerContainer">
+			<span class="postOptionsPanel">
+			{if ready && (startupArgs.isTutor || creatorId == blogCurrentUser.id)}
+				<a href="#" title="${blog_comment_on_post_tooltip}" onClick="switchState('createComment',{postId: '${id}'});"><img src="/library/image/silk/comment_add.png" width="16" height="16" alt="Add Comment"/></a>&nbsp;
+            {/if}
+			{if (creatorId == blogCurrentUser.id && !ready) || (ready && startupArgs.isTutor)}
+				<a href="#" title="${blog_delete_post_tooltip}" onclick="return LearningLogUtils.recyclePost('${id}');"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete"/></a>&nbsp;
+			{/if}
+			{if !ready && creatorId === blogCurrentUser.id}
+				<a href="#" onClick="switchState('createPost',{postId:'${id}'});" title="${blog_edit_post_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit"/></a>&nbsp;
+			{/if}
+        </span>
+        {if attachments.length > 0}
+        <span class="attachments">Attachments:</span>
+        {/if}
+        {for attachment in attachments}
+            <a onclick="window.open('${attachment.url}');" title="${attachment.name}">
+            {if attachment.mimeType == 'application/pdf'}<img src="/library/image/silk/page_white_acrobat.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType.match(/excel$/)}<img src="/library/image/silk/page_white_excel.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType == 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}<img src="/library/image/silk/page_white_excel.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType == 'application/msword' || attachment.name.match(/\.docx?$/)}<img src="/library/image/silk/page_white_word.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType.match(/powerpoint/)}<img src="/library/image/silk/page_white_powerpoint.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType == 'application/vnd.openxmlformats-officedocument.presentationml.presentation'}<img src="/library/image/silk/page_white_powerpoint.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType == 'text/plain'}<img src="/library/image/silk/page_white_text.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType == 'text/html'}<img src="/library/image/silk/html.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType.match(/^image/)}<img src="/library/image/silk/picture.png" width="16" height="16" alt="${attachment.name}" />
+            {elseif attachment.mimeType.match(/^audio/)}<img src="/library/image/silk/sound.png" width="16" height="16" alt="${attachment.name}" />
+            {else}<img src="/library/image/silk/error.png" width="16" height="16" alt="${attachment.name}" />
+            {/if}
+            </a>
+        {/for}
+			<div class="author">
+				<span>${creatorDisplayName}</span><br /><span style="font-size: smaller;font-style: italic;">Created:</span><span style="font-size: smaller;font-style: italic;">${formattedCreatedDate}</span><br/><span style="font-size: smaller;font-style: italic;">Modified:</span><span style="font-size: smaller;font-style: italic;">${formattedModifiedDate}</span>
+			</div>
+			<br/>
+			<br/>
+			<div class="title">
+				<span>
+					<a href="#" onclick="switchState('post',{'postId':'${id}'});" title="${blog_view_post_tooltip}"><span>${title}</span></a>
+				</span>
+				{if private}
+				<img src="/library/image/silk/key.png" title="${blog_private_post_tooltip}" width="16" height="16"/>
+				{/if}
+			</div>
+
+			<div class="content">${content}</div>
+
+			<br />
+
+			<span id="${id}_comments" class="comments">
+					{for comment in comments}
+					<div class="blog_comment">
+						<div style="overflow:auto; margin-bottom: 10px;">
+							<div style="float:left; margin-right: 10px;"><img src="/direct/profile/${comment.escapedCreatorId}/image" width="50"/></div>
+							<div style="float:left;"><span>${comment.creatorDisplayName}</span><br/><span class="blog_comment_date">Created: ${comment.formattedCreatedDate}</span><br/><span class="blog_comment_date">Modified: ${comment.formattedModifiedDate}</span></div>
+						</div>
+						<div class="blog_comment_content">${comment.content}</div>
+						{if startupArgs.isTutor || comment.creatorId === blogCurrentUser.id}
+							<a href="#" onclick="return LearningLogUtils.deleteComment('${comment.id}');" title="${blog_delete_comment_tooltip}"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete Comment"/></a>&nbsp;
+						{/if}
+						{if comment.creatorId === blogCurrentUser.id}
+							<a href="#" onClick="switchState('createComment',{postId:'${id}',commentId:'${comment.id}'});" title="${blog_edit_comment_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit Comment"/></a>
+						{/if}
+					</div>
+					{/for}
+			</span>
+		</div>
+	</div>
+-->
+</div>
+
+<div id="blog_all_posts_template" style="display:none"><!--
+	<h2>${blog_worksite_posts_label}</h2>
+	{if posts.length <= 0}
+	<div id="noPostsLabel"><span>${noPosts}</span></div>
+	{else}
+	<div style="clear: left; margin-top: 10px;" id="viewOptions">
+   		<input type="checkbox" onclick="toggleFullContent(this);"/>
+		<span>${blog_show_title_only_label}</span>
+   	</div>
+	{/if}
+    <div id="postsWrapper">
+    	<br />
+  	 	<div id="posts">
+	  	    <table class="tableHeader">
+				<tbody>
+					{for post in posts}
+					<tr>
+						<td>
+							<div id="post_${post.id}"></div>
+						</td>
+					</tr>
+					{/for}
+				</tbody>
+			</table>
+		</div>
+	</div>
+-->
+</div>
+
+<div id="blog_user_posts_template" style="display:none"><!--
+	<div id="blog_author_profile"></div>
+	{if posts.length <= 0}
+	<div id="noPostsLabel"><span>${noPosts}</span></div>
+	{else}
+	<div style="clear: left; margin-top: 10px;" id="viewOptions">
+   		<input type="checkbox" onclick="toggleFullContent(this);"/>
+		<span>${blog_show_title_only_label}</span>
+   	</div>
+	{/if}
+    <div id="postsWrapper">
+    	<br />
+  	 	<div id="posts">
+	  	    <table class="tableHeader">
+				<tbody>
+					{for post in posts}
+					<tr>
+						<td>
+							<div id="post_${post.id}"></div>
+						</td>
+					</tr>
+					{/for}
+				</tbody>
+			</table>
+		</div>
+	</div>
+-->
+</div>
+
+<div id="blog_recycled_posts_template" style="display:none"><!--
+	<h2>${blog_recycle_bin_label}</h2>
+	<div id="noPostsLabel"><span>${noPosts}</span></div>
+    <div id="postsWrapper">
+    
+    	<input type="button" id="blog_really_delete_button" value="${del}"/>
+    	<input type="button" id="blog_restore_button" value="${restore}"/>
+  	    
+  	 	<div id="posts">
+  	    <table class="tableHeader">
+		<tbody>
+			{for post in posts}
+			<tr>
+				<td valign="top" width="20px"><input type="checkbox" id="${post.id}" class="blog_recycled_post_checkbox"/></td>
+				<td>
+					<div id="post_${post.id}"></div>
+				</td>
+			</tr>
+			{/for}
+		</tbody>
+		</table>
+		</div>
+	</div>
+	</div>
+-->
+</div>
+
+<div id="blog_posts_print_template" style="display:none"><!--
+    <div id="postsWrapper">
+    	<br />
+  	 	<div id="posts">
+	  	    <table class="tableHeader">
+				<tbody>
+					{for post in posts}
+					<tr>
+						<td>
+							<div id="post_${post.id}" style="width:100%"></div>
+						</td>
+					</tr>
+					{/for}
+				</tbody>
+			</table>
+		</div>
+	</div>
+-->
+</div>
+
+<div id="blog_preferences_template" style="display:none"><!--
+<h2>${blog_preferences_label}</h2>
+<fieldset id="blog_email_preferences_fieldset">
+<legend>${blog_email_alerts_label}</legend>
+<input id="blog_email_option_never_checkbox" class="blog_email_option" type="radio" name="emailPreference" value="never"/>${blog_email_never_label}
+<br />
+<input id="blog_email_option_each_checkbox" class="blog_email_option" type="radio" name="emailPreference" value="each"/>${blog_email_each_label}
+<br />
+<input id="blog_email_option_digest_checkbox" class="blog_email_option" type="radio" name="emailPreference" value="digest"/>${blog_email_digest_label}
+<br />
+</fieldset>
+<br />
+
+<input id="blog_preferences_save_button" type="button" value="${save}"/>
+<input type="button" value="${cancel}" onclick="return switchState('home');"/>
+</form>
+-->
+</div>
+
+<div id="blog_search_results_template" style="display:none;"><!--
+<h2>${searchResults}</h2>
+{for result in results}
+        <b>${result.tool}:</b><a href="${result.url}">${result.title}</a>
+        <br />
+        <div class="blog_search_result">${result.searchResult}</div>
+        <br />
+        <br />
+{/for}
+-->
+</div>
+
+<!--  Templates End -->
+
+<script type="text/javascript" src="/learninglog-tool/js/learninglog.js"></script>
+<link rel="stylesheet" type="text/css" href="/learninglog-tool/css/jquery.cluetip.css" />
+
+</div> <!-- /portletBody -->
+
+</body>
+</html>

@@ -1,0 +1,60 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+	<bean id="org.sakaiproject.learninglog.api.SakaiProxy" class="org.sakaiproject.learninglog.impl.SakaiProxyImpl" init-method="init">
+        <property name="toolManager"><ref bean="org.sakaiproject.tool.api.ToolManager" /></property>
+        <property name="sessionManager"><ref bean="org.sakaiproject.tool.api.SessionManager" /></property>
+        <property name="serverConfigurationService"><ref bean="org.sakaiproject.component.api.ServerConfigurationService" /></property>
+        <property name="siteService"><ref bean="org.sakaiproject.site.api.SiteService" /></property>
+        <property name="userDirectoryService"><ref bean="org.sakaiproject.user.api.UserDirectoryService" /></property>
+        <property name="entityManager"><ref bean="org.sakaiproject.entity.api.EntityManager" /></property>
+        <property name="sqlService"><ref bean="org.sakaiproject.db.api.SqlService" /></property>
+        <property name="functionManager"><ref bean="org.sakaiproject.authz.api.FunctionManager" /></property>
+        <property name="notificationService"><ref bean="org.sakaiproject.event.api.NotificationService" /></property>
+        <property name="eventTrackingService"><ref bean="org.sakaiproject.event.api.EventTrackingService" /></property>
+        <property name="contentHostingService"><ref bean="org.sakaiproject.content.api.ContentHostingService" /></property>
+        <property name="securityService"><ref bean="org.sakaiproject.authz.api.SecurityService" /></property>
+        <property name="usageSessionService"><ref bean="org.sakaiproject.event.api.UsageSessionService" /></property>
+	</bean>
+
+	<bean id="org.sakaiproject.learninglog.impl.PersistenceManager" class="org.sakaiproject.learninglog.impl.PersistenceManager" init-method="init">
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.api.SakaiProxy" /></property>
+	</bean>
+
+	<bean id="org.sakaiproject.learninglog.impl.LearningLogSecurityManager" class="org.sakaiproject.learninglog.impl.LearningLogSecurityManager" init-method="init">
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.api.SakaiProxy" /></property>
+        <property name="persistenceManager"><ref bean="org.sakaiproject.learninglog.impl.PersistenceManager" /></property>
+	</bean>
+
+	<bean id="org.sakaiproject.learninglog.api.LearningLogManager" class="org.sakaiproject.learninglog.impl.LearningLogManagerImpl" init-method="init">
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.api.SakaiProxy" /></property>
+        <property name="persistenceManager"><ref bean="org.sakaiproject.learninglog.impl.PersistenceManager" /></property>
+        <property name="securityManager"><ref bean="org.sakaiproject.learninglog.impl.LearningLogSecurityManager" /></property>
+	</bean>
+
+    <bean id="org.sakaiproject.learninglog.impl.LearningLogUserNotificationPreferencesRegistration"
+      parent="org.sakaiproject.user.api.UserNotificationPreferencesRegistration"
+      class="org.sakaiproject.learninglog.impl.LearningLogUserNotificationPreferencesRegistration"
+      init-method="init" singleton="true">
+      <property name="bundleLocation"><value>org.sakaiproject.learninglog.bundle.Messages</value></property>
+      <property name="sectionTitleBundleKey"><value>prefs_title</value></property>
+      <property name="sectionDescriptionBundleKey"><value>prefs_description</value></property>
+      <property name="overrideSectionTitleBundleKey"><value>prefs_title_override</value></property>
+      <property name="defaultValue"><value>3</value></property>
+      <property name="type"><value>sakai:learninglog</value></property>
+      <property name="prefix"><value>learninglog</value></property>
+      <property name="toolId"><value>sakai.learninglog</value></property>
+      <property name="rawOptions">
+         <map>
+            <entry key="1"><value>prefs_opt1</value></entry>
+            <entry key="2"><value>prefs_opt2</value></entry>
+            <entry key="3"><value>prefs_opt3</value></entry>
+         </map>
+      </property>
+     <property name="overrideBySite"><value>true</value></property>
+     <property name="expandByDefault"><value>true</value></property>
+   </bean>
+
+</beans>

@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+
+	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
+		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogPostEntityProvider" init-method="init">
+		<property name="developerService"><ref bean="org.sakaiproject.entitybroker.DeveloperHelperService"/></property>
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.api.LearningLogManager" /></property>
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.api.SakaiProxy" /></property>
+	</bean>
+	
+	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
+		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogAuthorEntityProvider" init-method="init">
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.api.LearningLogManager" /></property>
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.api.SakaiProxy" /></property>
+	</bean>
+	
+	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
+		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogCommentEntityProvider" init-method="init">
+		<property name="developerService"><ref bean="org.sakaiproject.entitybroker.DeveloperHelperService"/></property>
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.api.LearningLogManager" /></property>
+        <property name="sakaiProxy"><ref bean="org.sakaiproject.learninglog.api.SakaiProxy" /></property>
+	</bean>
+	
+	<bean parent="org.sakaiproject.entitybroker.entityprovider.AbstractEntityProvider" 
+		class="org.sakaiproject.learninglog.tool.entityprovider.LearningLogRoleEntityProvider" init-method="init">
+		<property name="developerService"><ref bean="org.sakaiproject.entitybroker.DeveloperHelperService"/></property>
+        <property name="learningLogManager"><ref bean="org.sakaiproject.learninglog.api.LearningLogManager" /></property>
+	</bean>
+
+</beans>
