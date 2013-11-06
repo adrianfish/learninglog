@@ -49,6 +49,9 @@ public class Comment implements Entity {
     @Getter @Setter
     private String postId;
 
+	@Getter @Setter
+	private String visibility = Visibilities.PRIVATE;
+
     @Getter @Setter
     private String siteId;
     
@@ -60,6 +63,14 @@ public class Comment implements Entity {
 
     @Setter
     private String url;
+
+    /*
+    @Getter @Setter
+    private boolean autosaving;
+
+    @Getter @Setter
+    private boolean publishing;
+    */
 
     public Comment() {
     	this("");

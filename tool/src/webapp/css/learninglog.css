@@ -167,3 +167,10 @@ th.blogSortableTableHeaderSortDown {
 #blog_author_table th div{
 	margin-right: 15px;
 }
+
+.learninglog_draft_label {
+    float: left;
+	margin-left: 20px;
+    color: red;
+    font-weight: bold;
+}

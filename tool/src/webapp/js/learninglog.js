@@ -342,9 +342,21 @@ function switchState(state,args) {
 		$(document).ready(function() {
 
 			SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPost,'blog_post_' + args.postId);
-			$('#blog_save_comment_button').click(LearningLogUtils.saveComment);
+
+			$('#blog_save_comment_button').click(function (e) { LearningLogUtils.saveCommentAsDraft(false); });
+
+			$('#blog_publish_comment_button').click(LearningLogUtils.publishComment);
 			
  			SakaiUtils.setupWysiwygEditor('blog_content_editor',600,400,'Default',startupArgs.blogSiteId);
+
+			// Start the auto saver
+			autosave_id = setInterval(function() {
+					if(!SakaiUtils.isEditorDirty('blog_content_editor')) {
+						return;
+					}
+					
+					LearningLogUtils.saveCommentAsDraft(true);
+				},10000);
 		});
 	} else if('permissions' === state) {
 

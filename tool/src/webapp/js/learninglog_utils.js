@@ -189,14 +189,28 @@ var LearningLogUtils;
 		
 		$('#ll_post_form').submit();
 	}
+
+	LearningLogUtils.saveCommentAsDraft = function(autosave) {
+		return LearningLogUtils.storeComment('PRIVATE', autosave);
+	}
+
+	LearningLogUtils.publishComment = function() {
 	
-	LearningLogUtils.saveComment = function() {
+		if(!confirm(blog_publish_comment_message)) {
+			return false;
+		}
+
+		LearningLogUtils.storeComment('READY', false);
+	}
+	
+	LearningLogUtils.storeComment = function(visibility, autosave) {
 
 		var comment = {
 				'id':$('#blog_comment_id_field').val(),
 				'postId':blogCurrentPost.id,
 				'content':SakaiUtils.getEditorData('blog_content_editor'),
-				'siteId':startupArgs.blogSiteId
+				'siteId':startupArgs.blogSiteId,
+				'visibility':visibility
 				};
 
 		jQuery.ajax( {
@@ -206,7 +220,21 @@ var LearningLogUtils;
 			timeout: 30000,
 			dataType: 'text',
 		   	success : function(id) {
-				switchState('userPosts',{'userId':blogCurrentPost.creatorId});
+
+                $('#blog_comment_id_field').val(id);
+                
+                if(autosave) {
+
+                    SakaiUtils.resetEditor('blog_content_editor');
+
+                    // Flash the autosaved message
+                    $('#learninglog_autosaved_message').show();
+                    setTimeout(function() {
+                            $('#learninglog_autosaved_message').fadeOut(200);
+                        },2000);
+                } else {
+				    switchState('userPosts',{'userId':blogCurrentPost.creatorId});
+                }
 			},
 			error : function(xmlHttpRequest,status,error) {
 				alert("Failed to save comment. Status: " + status + '. Error: ' + error);

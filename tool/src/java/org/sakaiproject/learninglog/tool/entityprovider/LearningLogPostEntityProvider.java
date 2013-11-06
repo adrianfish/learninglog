@@ -41,8 +41,8 @@ import org.sakaiproject.util.ResourceLoader;
 import lombok.Setter;
 
 @Setter
-public class LearningLogPostEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Inputable, Createable, Outputable, Describeable, Deleteable, CollectionResolvable, ActionsExecutable, Statisticable
-{
+public final class LearningLogPostEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Inputable, Createable, Outputable, Describeable, Deleteable, CollectionResolvable, ActionsExecutable, Statisticable {
+
 	public final static String ENTITY_PREFIX = "learninglog-post";
 	
 	private static final String[] EVENT_KEYS
@@ -60,7 +60,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 	
 	public void init() {}
 
-	protected final Logger LOG = Logger.getLogger(LearningLogPostEntityProvider.class);
+	private final Logger LOG = Logger.getLogger(LearningLogPostEntityProvider.class);
 
 	public boolean entityExists(String id) {
 
@@ -83,7 +83,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 
 	public Object getEntity(EntityReference ref) {
 
-		String id = ref.getId();
+		final String id = ref.getId();
 
 		if (id == null || "".equals(id)) {
 			return new Post();
@@ -109,17 +109,17 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 
 	public String createEntity(EntityReference ref, Object entity, Map<String, Object> params) {
 
-		String userId = developerService.getCurrentUserId();
+		final String userId = developerService.getCurrentUserId();
 
-		String id = (String) params.get("id");
-		String visibility = (String) params.get("visibility");
-		String title = (String) params.get("title");
-		String content = (String) params.get("content");
-		String siteId = (String) params.get("siteId");
-		String mode = (String) params.get("mode");
-		String isAutosave = (String) params.get("isAutosave");
+		final String id = (String) params.get("id");
+		final String visibility = (String) params.get("visibility");
+		final String title = (String) params.get("title");
+		final String content = (String) params.get("content");
+		final String siteId = (String) params.get("siteId");
+		final String mode = (String) params.get("mode");
+		final String isAutosave = (String) params.get("isAutosave");
 
-		Post post = new Post();
+		final Post post = new Post();
 		post.setId(id);
 		post.setVisibility(visibility);
 		post.setCreatorId(userId);
@@ -130,11 +130,11 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 		post.isAutosave = (isAutosave.equals("yes")) ? true : false;
 
 
-		String toolId = sakaiProxy.getLearningLogToolId(siteId);
+		final String toolId = sakaiProxy.getLearningLogToolId(siteId);
 		post.setUrl(sakaiProxy.getServerUrl() + "/portal/directtool/" + toolId + "?state=post&postId=" + id);
 		
-		boolean isNew = "".equals(post.getId());
-		boolean isPublishing = mode != null && "publish".equals(mode);
+		final boolean isNew = "".equals(post.getId());
+		final boolean isPublishing = mode != null && "publish".equals(mode);
 
         if(isPublishing) {
             // Make sure we merge in all the previously uploaded attachments, otherwise
@@ -154,7 +154,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			if((isNew || isPublishing) && post.isReady()) {
 
                 // This is for sitestats purposes.
-				String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/post/" + post.getId();
+				final String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/post/" + post.getId();
 				sakaiProxy.postEvent(Constants.BLOG_POST_CREATED_SS,reference,post.getSiteId());
 				
 				// Send an email to all site participants apart from the author
@@ -162,6 +162,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			}
 			
 			try {
+
 				String json = "{\"id\":\"" + post.getId() + "\",\"isAutosave\":" + post.isAutosave + ",\"attachments\":[";
 				for(Attachment attachment : post.getAttachments()) {
 					json += "{\"id\":\"" + attachment.id + "\",\"name\":\"" + attachment.name + "\"},";
@@ -174,16 +175,16 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			} catch(Exception e) {
 				throw new EntityException("Failed to encode JSON response","");
 			}
-		}
-		else {
+		} else {
 			throw new EntityException("Failed to save post","");
 		}
 	}
 	
 	private List<Attachment> getAttachments(Map<String, Object> params) {
-		List<FileItem> fileItems = new ArrayList<FileItem>();
 
-		String uploadsDone = (String) params.get(RequestFilter.ATTR_UPLOADS_DONE);
+		final List<FileItem> fileItems = new ArrayList<FileItem>();
+
+		final String uploadsDone = (String) params.get(RequestFilter.ATTR_UPLOADS_DONE);
 
 		if (uploadsDone != null && uploadsDone.equals(RequestFilter.ATTR_UPLOADS_DONE)) {
 			LOG.debug("UPLOAD STATUS: " + params.get("upload.status"));
@@ -209,10 +210,10 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			}
 		}
 
-		List<Attachment> attachments = new ArrayList<Attachment>();
+		final List<Attachment> attachments = new ArrayList<Attachment>();
 		if (fileItems.size() > 0) {
 			for (Iterator i = fileItems.iterator(); i.hasNext();) {
-				FileItem fileItem = (FileItem) i.next();
+				final FileItem fileItem = (FileItem) i.next();
 
 				String name = fileItem.getName();
 
@@ -228,112 +229,99 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 		return attachments;
 	}
 
-	public Object getSampleEntity()
-	{
+	public Object getSampleEntity() {
 		return new Post();
 	}
 
-	public String getEntityPrefix()
-	{
+	public String getEntityPrefix() {
 		return ENTITY_PREFIX;
 	}
 
-	public String[] getHandledOutputFormats()
-	{
+	public String[] getHandledOutputFormats() {
 		return new String[] { Formats.JSON };
 	}
 
-	public String[] getHandledInputFormats()
-	{
+	public String[] getHandledInputFormats() {
 		return new String[] { Formats.HTML, Formats.JSON, Formats.FORM };
 	}
 
-	public List<Post> getEntities(EntityReference ref, Search search)
-	{
+	public List<Post> getEntities(EntityReference ref, Search search) {
+
 		List<Post> posts = new ArrayList<Post>();
 
-		Restriction creatorRes = search.getRestrictionByProperty("creatorId");
+		final Restriction creatorRes = search.getRestrictionByProperty("creatorId");
 
-		Restriction locRes = search.getRestrictionByProperty(CollectionResolvable.SEARCH_LOCATION_REFERENCE);
-		Restriction visibilities = search.getRestrictionByProperty("visibilities");
+		final Restriction locRes = search.getRestrictionByProperty(CollectionResolvable.SEARCH_LOCATION_REFERENCE);
+		final Restriction visibilities = search.getRestrictionByProperty("visibilities");
 
-		QueryBean query = new QueryBean();
+		final QueryBean query = new QueryBean();
 		query.setVisibilities(new String[] {Visibilities.READY,Visibilities.PRIVATE});
 
-		if (locRes != null)
-		{
-			String location = locRes.getStringValue();
-			String context = new EntityReference(location).getId();
-
+		if (locRes != null) {
+			final String location = locRes.getStringValue();
+			final String context = new EntityReference(location).getId();
 			query.setSiteId(context);
 		}
 
-		if (creatorRes != null)
+		if (creatorRes != null) {
 			query.setCreator(creatorRes.getStringValue());
+        }
 
-		if (visibilities != null)
-		{
-			String visibilitiesValue = visibilities.getStringValue();
-			String[] values = visibilitiesValue.split(",");
+		if (visibilities != null) {
+			final String visibilitiesValue = visibilities.getStringValue();
+			final String[] values = visibilitiesValue.split(",");
 			query.setVisibilities(values);
 		}
 
-		try
-		{
+		try {
 			posts = learningLogManager.getPosts(query);
-		}
-		catch (Exception e)
-		{
+		} catch (Exception e) {
 			LOG.error("Caught exception whilst getting posts.", e);
 		}
 
 		return posts;
 	}
 
-	public void deleteEntity(EntityReference ref, Map<String, Object> params)
-	{
-		if (LOG.isDebugEnabled())
+	public void deleteEntity(EntityReference ref, Map<String, Object> params) {
+
+		if (LOG.isDebugEnabled()) {
 			LOG.debug("deleteEntity");
+        }
 		
-		String siteId = (String) params.get("siteId");
+		final String siteId = (String) params.get("siteId");
 		
-		if(learningLogManager.deletePost(ref.getId()))
-		{
+		if(learningLogManager.deletePost(ref.getId())) {
+
 			String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/post/" + ref.getId();
 			sakaiProxy.postEvent(Constants.BLOG_POST_DELETED_SS,reference,siteId);
 		}
 	}
 
 	@EntityCustomAction(action = "recycle", viewKey = EntityView.VIEW_SHOW)
-	public String handleRecycle(EntityReference ref)
-	{
-		String postId = ref.getId();
+	public String handleRecycle(EntityReference ref) {
+
+		final String postId = ref.getId();
 		
-		if (postId == null)
+		if (postId == null) {
 			throw new IllegalArgumentException("Invalid path provided: expect to receive the post id");
+        }
 		
 		Post post = null;
 		
-		try
-		{
+		try {
 			post = learningLogManager.getPost(postId);
-		}
-		catch(Exception e)
-		{
+		} catch(Exception e) {
 		}
 		
 		if(post == null)
 			throw new IllegalArgumentException("Invalid post id");
 		
-		if(learningLogManager.recyclePost(postId))
-		{
-			String reference = Constants.REFERENCE_ROOT + "/" + post.getSiteId() + "/post/" + ref.getId();
+		if(learningLogManager.recyclePost(postId)) {
+
+			final String reference = Constants.REFERENCE_ROOT + "/" + post.getSiteId() + "/post/" + ref.getId();
 			sakaiProxy.postEvent(Constants.BLOG_POST_RECYCLED_SS,reference,post.getSiteId());
-			
 			return "SUCCESS";
-		}
-		else
-		{
+		} else {
 			return "FAIL";
 		}
 	}
@@ -341,19 +329,19 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 	@EntityCustomAction(action = "deleteAttachment", viewKey = EntityView.VIEW_SHOW)
 	public String handleDeleteAttachment(EntityReference ref, Map<String,Object> params) {
 		
-		String postId = ref.getId();
+		final String postId = ref.getId();
 		
 		if (postId == null) {
 			throw new IllegalArgumentException("Invalid path provided: expect to receive the post id");
 		}
 		
-		String siteId = (String) params.get("siteId");
+		final String siteId = (String) params.get("siteId");
 		
 		if (siteId == null) {
 			throw new IllegalArgumentException("Invalid parameters provided: expect to receive the site id as a parameter named 'siteId'");
 		}
 		
-		String name = (String) params.get("name");
+		final String name = (String) params.get("name");
 		
 		if (name == null) {
 			throw new IllegalArgumentException("Invalid parameters provided: expect to receive the attachment name as a parameter named 'name'");
@@ -369,7 +357,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 	@EntityCustomAction(action = "restore", viewKey = EntityView.VIEW_LIST)
 	public String handleRestore(EntityView view, Map<String,Object> params) {
 		
-		String userId = developerHelperService.getCurrentUserId();
+		final String userId = developerHelperService.getCurrentUserId();
 		
 		if(userId == null) {
 			throw new EntityException("You must be logged in to restore posts","",HttpServletResponse.SC_UNAUTHORIZED);
@@ -379,9 +367,9 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			throw new EntityException("Bad request: a posts param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
 		}
 		
-		String postIdsString = (String) params.get("posts");
+		final String postIdsString = (String) params.get("posts");
 		
-		String[] postIds = postIdsString.split(",");
+		final String[] postIds = postIdsString.split(",");
 		
 		for(String postId : postIds) {
 
@@ -400,7 +388,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			}
 
 			if (learningLogManager.restorePost(postId)) {
-				String reference = Constants.REFERENCE_ROOT + "/" + post.getSiteId() + "/posts/" + postId;
+				final String reference = Constants.REFERENCE_ROOT + "/" + post.getSiteId() + "/posts/" + postId;
 				sakaiProxy.postEvent(Constants.BLOG_POST_RESTORED_SS, reference, post.getSiteId());
 			}
 		}
@@ -411,7 +399,7 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 	@EntityCustomAction(action = "remove", viewKey = EntityView.VIEW_LIST)
 	public String handleRemove(EntityView view, Map<String,Object> params) {
 		
-		String userId = developerHelperService.getCurrentUserId();
+		final String userId = developerHelperService.getCurrentUserId();
 		
 		if(userId == null) {
 			throw new EntityException("You must be logged in to delete posts","",HttpServletResponse.SC_UNAUTHORIZED);
@@ -421,20 +409,20 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 			throw new EntityException("Bad request: a posts param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
 		}
 		
-		String siteId = (String) params.get("site");
+		final String siteId = (String) params.get("site");
 		
 		if(siteId == null) {
 			throw new EntityException("Bad request: a site param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
 		}
 		
-		String postIdsString = (String) params.get("posts");
+		final String postIdsString = (String) params.get("posts");
 		
-		String[] postIds = postIdsString.split(",");
+		final String[] postIds = postIdsString.split(",");
 		
 		for(String postId : postIds) {
 
 			if (learningLogManager.deletePost(postId)) {
-				String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/posts/" + postId;
+				final String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/posts/" + postId;
 				sakaiProxy.postEvent(Constants.BLOG_POST_DELETED_SS, reference, siteId);
 			}
 		}
@@ -445,16 +433,15 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 	/**
 	 * From Statisticable
 	 */
-	public String getAssociatedToolId()
-	{
+	public String getAssociatedToolId() {
 		return "sakai.learninglog";
 	}
 
 	/**
 	 * From Statisticable
 	 */
-	public String[] getEventKeys()
-	{
+	public String[] getEventKeys() {
+
 		String[] temp = new String[EVENT_KEYS.length];
 		System.arraycopy(EVENT_KEYS, 0, temp, 0, EVENT_KEYS.length);
 		return temp;
@@ -463,31 +450,28 @@ public class LearningLogPostEntityProvider extends AbstractEntityProvider implem
 	/**
 	 * From Statisticable
 	 */
-	public Map<String, String> getEventNames(Locale locale)
-	{
-		Map<String, String> localeEventNames = new HashMap<String, String>();
-		ResourceLoader msgs = new ResourceLoader("LearningLogEvents");
+	public Map<String, String> getEventNames(Locale locale) {
+
+		final Map<String, String> localeEventNames = new HashMap<String, String>();
+		final ResourceLoader msgs = new ResourceLoader("LearningLogEvents");
 		msgs.setContextLocale(locale);
-		for (int i = 0; i < EVENT_KEYS.length; i++)
-		{
+		for (int i = 0; i < EVENT_KEYS.length; i++) {
 			localeEventNames.put(EVENT_KEYS[i], msgs.getString(EVENT_KEYS[i]));
 		}
 		return localeEventNames;
 	}
 
-	public class JSONPost {
+	public final class JSONPost {
 		
 		public String id = "";
 		public boolean isAutosave = false;
 		public List<Attachment> attachments = new ArrayList<Attachment>();
 		
 		public JSONPost(Post post) {
+
 			this.id = post.getId();
 			this.isAutosave = post.isAutosave;
 			this.attachments = post.getAttachments();
 		}
-		
 	}
-
-
 }

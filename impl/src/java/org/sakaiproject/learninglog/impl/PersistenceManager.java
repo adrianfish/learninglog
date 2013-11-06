@@ -604,6 +604,7 @@ public class PersistenceManager {
 					comment.setId(commentId);
 					comment.setPostId(post.getId());
 					comment.setCreatorId(commentCreatorId);
+					comment.setVisibility(commentRS.getString("VISIBILITY"));
 					comment.setCreatedDate(commentCreatedDate.getTime());
 					comment.setContent(commentContent);
 					comment.setModifiedDate(commentModifiedDate.getTime());

@@ -68,6 +68,10 @@ var SakaiUtils;
 
 	SakaiUtils.setupWysiwygEditor = function(textarea_id, width, height) {
 
+        if (CKEDITOR.instances[textarea_id]) {
+            CKEDITOR.remove(CKEDITOR.instances[textarea_id]);
+        }
+
         sakai.editor.launch(textarea_id,{},width,height);
 
         CKEDITOR.instances[textarea_id].on('instanceReady',function (e) {

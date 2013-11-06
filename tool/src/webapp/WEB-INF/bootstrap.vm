@@ -117,7 +117,7 @@ ${sakaiHtmlHead}
 		<br />
     	<input id="blog_site_id_field" name="siteId" type="hidden" value="${startupArgs.blogSiteId}"/>
     	<input id="blog_mode_field" name="mode" type="hidden"/>
-    	<input id="blog_publish_post_button" type="button" value="Publish" title="Publishing will make this post visible to others"/>
+        <input id="blog_publish_post_button" type="button" value="${publish}" title="Publishing will make this post visible to others"/>
     	<input id="blog_save_post_button" type="button" value="Save as Draft" title="Saving as Draft will save your changes but will not make those changes visible to others"/>
     	<input id="blog_cancel_button" type="button" value="Cancel"/>
 	    <span id="learninglog_autosaved_message">${learninglog_autosaved_message_label}</span>
@@ -136,8 +136,10 @@ ${sakaiHtmlHead}
 	<br />
 	<br />
     <input id="blog_comment_id_field" type="hidden" value="${id}"/>
-    <input id="blog_save_comment_button" type="button" value="${save}"/>
+    <input id="blog_publish_comment_button" type="button" value="${publish}" title="Publishing will make this comment visible to the post author"/>
+    <input id="blog_save_comment_button" type="button" value="Save as Draft" title="Saving as Draft will save your changes but will not make those changes visible to the post author"/>
     <input type="button" value="${cancel}" onclick="switchState('home');"/>
+    <span id="learninglog_autosaved_message">${learninglog_autosaved_message_label}</span>
 -->
 </div>
 
@@ -243,10 +245,14 @@ ${sakaiHtmlHead}
 
 			<span id="${id}_comments" class="comments">
 					{for comment in comments}
+                    {if comment.visibility == 'READY' || comment.creatorId === blogCurrentUser.id}
 					<div class="blog_comment">
 						<div style="overflow:auto; margin-bottom: 10px;">
 							<div style="float:left; margin-right: 10px;"><img src="/direct/profile/${comment.escapedCreatorId}/image" width="50"/></div>
 							<div style="float:left;"><span>${comment.creatorDisplayName}</span><br/><span class="blog_comment_date">Created: ${comment.formattedCreatedDate}</span><br/><span class="blog_comment_date">Modified: ${comment.formattedModifiedDate}</span></div>
+                            {if comment.visibility == 'PRIVATE'}
+                            <div class="learninglog_draft_label">DRAFT</div>
+                            {/if}
 						</div>
 						<div class="blog_comment_content">${comment.content}</div>
 						{if startupArgs.isTutor || comment.creatorId === blogCurrentUser.id}
@@ -255,7 +261,8 @@ ${sakaiHtmlHead}
 						{if comment.creatorId === blogCurrentUser.id}
 							<a href="#" onClick="switchState('createComment',{postId:'${id}',commentId:'${comment.id}'});" title="${blog_edit_comment_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit Comment"/></a>
 						{/if}
-					</div>
+                    </div>
+                    {/if}
 					{/for}
 			</span>
 		</div>

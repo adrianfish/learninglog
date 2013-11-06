@@ -219,16 +219,17 @@ public class SQLGenerator {
 			if ("".equals(comment.getId())) {
 				comment.setId(UUID.randomUUID().toString());
 
-				String sql = "INSERT INTO LL_COMMENT VALUES(?,?,?,?,?,?)";
+				String sql = "INSERT INTO LL_COMMENT VALUES(?,?,?,?,?,?,?)";
 
 				PreparedStatement statement = connection.prepareStatement(sql);
 
 				statement.setString(1, comment.getId());
 				statement.setString(2, comment.getPostId());
 				statement.setString(3, comment.getCreatorId());
-				statement.setTimestamp(4, new Timestamp(comment.getCreatedDate()));
-				statement.setTimestamp(5, new Timestamp(comment.getModifiedDate()));
-				statement.setString(6, comment.getContent());
+				statement.setString(4, comment.getVisibility());
+				statement.setTimestamp(5, new Timestamp(comment.getCreatedDate()));
+				statement.setTimestamp(6, new Timestamp(comment.getModifiedDate()));
+				statement.setString(7, comment.getContent());
 
 				statements.add(statement);
 
@@ -248,12 +249,13 @@ public class SQLGenerator {
 				}
 				rs.close();
 			} else {
-				String sql = "UPDATE LL_COMMENT SET CONTENT = ?, MODIFIED_DATE = ? WHERE COMMENT_ID = ?";
+				String sql = "UPDATE LL_COMMENT SET CONTENT = ?, MODIFIED_DATE = ?, VISIBILITY = ? WHERE COMMENT_ID = ?";
 				PreparedStatement statement = connection.prepareStatement(sql);
 
 				statement.setString(1, comment.getContent());
 				statement.setTimestamp(2, new Timestamp(comment.getModifiedDate()));
-				statement.setString(3, comment.getId());
+				statement.setString(3, comment.getVisibility());
+				statement.setString(4, comment.getId());
 				statements.add(statement);
 			}
 		} finally {
