@@ -45,34 +45,6 @@ var LearningLogUtils;
 		return role;
 	}
 	
-	LearningLogUtils.showSearchResults = function(searchTerms) {
-
-    	jQuery.ajax( {
-			url : "/portal/tool/" + blogPlacementId + "/search",
-			type : 'POST',
-        	dataType : "json",
-        	async : false,
-			cache: false,
-        	data : {'searchTerms':searchTerms},
-        	success : function(results) {
-        		var hits = results;
-				SakaiUtils.renderTrimpathTemplate('blog_search_results_template',{'results':hits},'blog_content');
-	 			$(document).ready(function() {
-	 				try {
-						if(window.frameElement) {
-							setMainFrameHeight(window.frameElement.id);
-						}
-					} catch(err) {
-						// This is likely under an LTI provision scenario
-					}
-				});
-        	},
-        	error : function(xmlHttpRequest,status,error) {
-				alert("Failed to search. Status: " + status + ". Error: " + error);
-			}
-		});
-	}
-	
 	LearningLogUtils.addFormattedDatesToCurrentPosts = function () {
 
         for(var i=0,j=blogCurrentPosts.length;i<j;i++) {
@@ -130,23 +102,6 @@ var LearningLogUtils;
 		});
 	}
 
-	LearningLogUtils.setPostsForCurrentSite = function() {
-
-		jQuery.ajax( {
-	       	url : "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId,
-	       	dataType : "json",
-	       	async : false,
-			cache: false,
-		   	success : function(data) {
-				blogCurrentPosts = data['learninglog-post_collection'];
-                LearningLogUtils.addFormattedDatesToCurrentPosts();
-			},
-			error : function(xmlHttpRequest,status,errorThrown) {
-				alert("Failed to get posts. Reason: " + errorThrown);
-			}
-	   	});
-	}
-
 	LearningLogUtils.parsePermissions = function() {
 
 		var roleMapList = [];
@@ -182,7 +137,6 @@ var LearningLogUtils;
 			type : 'POST',
 			data : myData,
 			timeout: 30000,
-			async : false,
 			dataType: 'text',
 		   	success : function(result) {
 				switchState('home');
@@ -250,17 +204,14 @@ var LearningLogUtils;
 			type : 'POST',
 			data : comment,
 			timeout: 30000,
-			async : false,
 			dataType: 'text',
 		   	success : function(id) {
-				switchState('home');
+				switchState('userPosts',{'userId':blogCurrentPost.creatorId});
 			},
 			error : function(xmlHttpRequest,status,error) {
 				alert("Failed to save comment. Status: " + status + '. Error: ' + error);
 			}
 	  	});
-
-		return false;
 	}
 
 	LearningLogUtils.recyclePost = function(postId) {
@@ -272,7 +223,6 @@ var LearningLogUtils;
 		jQuery.ajax( {
 	 		url : "/direct/learninglog-post/" + postId + "/recycle",
 			dataType : 'text',
-			async : false,
 			cache : false,
 		   	success : function(result) {
 				switchState('home');
@@ -281,15 +231,9 @@ var LearningLogUtils;
 				alert("Failed to recycle post. Status: " + status + '. Error: ' + error);
 			}
 	  	});
-
-		return false;
 	}
 
 	LearningLogUtils.deleteSelectedPosts = function() {
-	
-		if(!confirm(blog_really_delete_post_message)) {
-			return false;
-		}
 		
 		var selected = $('.blog_recycled_post_checkbox:checked');
 
@@ -297,6 +241,10 @@ var LearningLogUtils;
             // No posts selected for deletion
             return;
         }
+
+		if(!confirm(blog_really_delete_post_message)) {
+			return false;
+		}
         
 		var postIds = '';
 
@@ -308,7 +256,6 @@ var LearningLogUtils;
 		jQuery.ajax( {
 	 		url : "/direct/learninglog-post/remove?posts=" + postIds + "&site=" + startupArgs.blogSiteId,
 			dataType : 'text',
-			async : false,
 		   	success : function(result) {
 				switchState('home');
 			},
@@ -316,8 +263,6 @@ var LearningLogUtils;
 				alert("Failed to delete selected posts. Status: " + status + '. Error: ' + error);
 			}
 	  	});
-
-		return false;
 	}
 
 	LearningLogUtils.restoreSelectedPosts = function() {
@@ -339,7 +284,6 @@ var LearningLogUtils;
 		jQuery.ajax( {
 	 		url : "/direct/learninglog-post/restore?posts=" + postIds,
 			dataType : 'text',
-			async : false,
 		   	success : function(result) {
 				switchState('home');
 			},
@@ -347,8 +291,6 @@ var LearningLogUtils;
 				alert("Failed to restore selected posts. Status: " + status + '. Error: ' + error);
 			}
 	  	});
-
-		return false;
 	}
 
 	LearningLogUtils.getCurrentUserPermissions = function() {
@@ -421,7 +363,6 @@ var LearningLogUtils;
 		
 		jQuery.ajax( {
 	 		url : "/direct/learninglog-comment/" + commentId + "?siteId=" + startupArgs.blogSiteId,
-	   		async : false,
 			type:'DELETE',
 		   	success : function(text,status) {
 				switchState('home');
@@ -430,7 +371,6 @@ var LearningLogUtils;
 				alert("Failed to delete comment. Status: " + status + ". Error: " + error);
 			}
 	  	});
-	  	
-	  	return false;
 	}
+
 }) ();

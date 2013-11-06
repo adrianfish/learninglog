@@ -36,8 +36,6 @@ var autosave_id = null;
 		$("#blog_create_post_link").hide();
     }
 
-	$('#blog_search_field').change(LearningLogUtils.showSearchResults);
-
 	blogCurrentUser = SakaiUtils.getCurrentUser();
 	
 	if(!blogCurrentUser) {
@@ -104,7 +102,6 @@ function switchState(state,args) {
 		jQuery.ajax({
 	    	url : "/direct/learninglog-author.json?siteId=" + startupArgs.blogSiteId,
 	      	dataType : "json",
-	       	async : false,
 			cache: false,
 		   	success : function(data) {
 				var authors = data['learninglog-author_collection'];
@@ -135,8 +132,9 @@ function switchState(state,args) {
 	 						headers:
 	 						{
 	 							2: {sorter: "isoDate"},
-	 							3: {sorter: "isoDate"}
-	 						} }).tablesorterPager({container: $("#blogBloggerPager"),positionFixed: false});
+	 							4: {sorter: "isoDate"}
+	 						}
+                        }).tablesorterPager({container: $("#blogBloggerPager"),positionFixed: false});
 	 						
 	 				try {
  						if(window.frameElement) {
@@ -166,7 +164,6 @@ function switchState(state,args) {
 		jQuery.ajax( {
 	       	'url' : url,
 	       	dataType : "text",
-	       	async : false,
 			cache: false,
 		   	success : function(text) {
 		   	
@@ -378,7 +375,6 @@ function switchState(state,args) {
 		jQuery.ajax( {
 	       	url : "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId + "&visibilities=RECYCLED",
 	       	dataType : "json",
-	       	async : false,
 			cache: false,
 		   	success : function(data) {
 

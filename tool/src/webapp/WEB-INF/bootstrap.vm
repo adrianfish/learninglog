@@ -387,18 +387,6 @@ ${sakaiHtmlHead}
 -->
 </div>
 
-<div id="blog_search_results_template" style="display:none;"><!--
-<h2>${searchResults}</h2>
-{for result in results}
-        <b>${result.tool}:</b><a href="${result.url}">${result.title}</a>
-        <br />
-        <div class="blog_search_result">${result.searchResult}</div>
-        <br />
-        <br />
-{/for}
--->
-</div>
-
 <!--  Templates End -->
 
 <script type="text/javascript" src="/learninglog-tool/js/learninglog.js"></script>
