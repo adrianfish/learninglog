@@ -159,25 +159,9 @@ public class PersistenceManager {
 			st = connection.createStatement();
 			String sql = sqlGenerator.getSelectComment(commentId);
 			rs = st.executeQuery(sql);
+            Comment comment = null;
             if(rs.next()) {
-
-                String postId = rs.getString("POST_ID");
-                String commentCreatorId = rs.getString("CREATOR_ID");
-                Date commentCreatedDate = rs.getTimestamp("CREATED_DATE");
-                Date commentModifiedDate = rs.getTimestamp("MODIFIED_DATE");
-                String commentContent = rs.getString("CONTENT");
-
-			    rs.close();
-
-                Comment comment = new Comment();
-                comment.setId(commentId);
-                comment.setPostId(postId);
-                comment.setCreatorId(commentCreatorId);
-                comment.setCreatedDate(commentCreatedDate.getTime());
-                comment.setContent(commentContent);
-                comment.setModifiedDate(commentModifiedDate.getTime());
-                comment.setCreatorDisplayName(sakaiProxy.getDisplayNameForTheUser(comment.getCreatorId()));
-                return comment;
+                return getCommentFromResult(rs);
             } else {
                 throw new IdUnusedException("There is no comment with the id '" + commentId + "'");
             }
@@ -199,21 +183,56 @@ public class PersistenceManager {
 		}
 	}
 
+    private Comment getCommentFromResult(ResultSet rs) throws SQLException {
+
+        String commentId = rs.getString("COMMENT_ID");
+        String postId = rs.getString("POST_ID");
+        String siteId = rs.getString("SITE_ID");
+        String commentCreatorId = rs.getString("CREATOR_ID");
+        Date commentCreatedDate = rs.getTimestamp("CREATED_DATE");
+        Date commentModifiedDate = rs.getTimestamp("MODIFIED_DATE");
+        String commentContent = rs.getString("CONTENT");
+
+        Comment comment = new Comment();
+        comment.setId(commentId);
+        comment.setPostId(postId);
+        comment.setSiteId(siteId);
+        comment.setCreatorId(commentCreatorId);
+        comment.setVisibility(rs.getString("VISIBILITY"));
+        if (!comment.isAutoSave()) {
+            comment.setAutosavedVersion(getAutosavedComment(commentId));
+        }
+        comment.setCreatedDate(commentCreatedDate.getTime());
+        comment.setContent(commentContent);
+        comment.setModifiedDate(commentModifiedDate.getTime());
+        comment.setCreatorDisplayName(sakaiProxy.getDisplayNameForTheUser(comment.getCreatorId()));
+
+        return comment;
+    }
+
 	public boolean saveComment(Comment comment) {
 		
 		Connection connection = null;
 		List<PreparedStatement> statements = null;
 
 		try {
+
+            comment.setCreatorDisplayName(sakaiProxy.getDisplayNameForTheUser(comment.getCreatorId()));
+
 			connection = sakaiProxy.borrowConnection();
 			boolean oldAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
 
+            if(comment.isAutoSave()) {
+                statements = sqlGenerator.getInsertStatementsForAutoSavedComment(comment, connection);
+            } else {
+                statements = sqlGenerator.getInsertStatementsForComment(comment, connection);
+            }
+
 			try {
-				comment.setCreatorDisplayName(sakaiProxy.getDisplayNameForTheUser(comment.getCreatorId()));
-				statements = sqlGenerator.getSaveStatementsForComment(comment, connection);
-				for (PreparedStatement st : statements)
+				for (PreparedStatement st : statements) {
 					st.executeUpdate();
+                }
 
 				connection.commit();
 
@@ -561,9 +580,11 @@ public class PersistenceManager {
 			return result;
 
 		Statement commentST = null;
+		Statement unsavedCommentST = null;
 
 		try {
             commentST = connection.createStatement();
+            unsavedCommentST = connection.createStatement();
             while (rs.next()) {
                 Post post = new Post();
                 String postId = rs.getString("POST_ID");
@@ -592,28 +613,17 @@ public class PersistenceManager {
 
 				String sql = sqlGenerator.getSelectComments(postId);
 				ResultSet commentRS = commentST.executeQuery(sql);
-
-				while (commentRS.next()) {
-					String commentId = commentRS.getString("COMMENT_ID");
-					String commentCreatorId = commentRS.getString("CREATOR_ID");
-					Date commentCreatedDate = commentRS.getTimestamp("CREATED_DATE");
-					Date commentModifiedDate = commentRS.getTimestamp("MODIFIED_DATE");
-					String commentContent = commentRS.getString("CONTENT");
-
-					Comment comment = new Comment();
-					comment.setId(commentId);
-					comment.setPostId(post.getId());
-					comment.setCreatorId(commentCreatorId);
-					comment.setVisibility(commentRS.getString("VISIBILITY"));
-					comment.setCreatedDate(commentCreatedDate.getTime());
-					comment.setContent(commentContent);
-					comment.setModifiedDate(commentModifiedDate.getTime());
-					comment.setCreatorDisplayName(sakaiProxy.getDisplayNameForTheUser(comment.getCreatorId()));
-
-					post.addComment(comment);
-				}
-
+                List<Comment> comments = transformResultSetInCommentCollection(commentRS);
 				commentRS.close();
+
+                // This should pick up all the autosaved comments that have never
+                // been explicitly saved as draft or published.
+				sql = sqlGenerator.getSelectUnsavedAutosavedComments(postId);
+				ResultSet unsavedCommentRS = unsavedCommentST.executeQuery(sql);
+                comments.addAll(transformResultSetInCommentCollection(unsavedCommentRS));
+				unsavedCommentRS.close();
+
+                post.setComments(comments);
 
 				post.setCreatorDisplayName(sakaiProxy.getDisplayNameForTheUser(post.getCreatorId()));
 
@@ -659,15 +669,37 @@ public class PersistenceManager {
 				result.add(post);
 			}
 		} finally {
+
 			if (commentST != null) {
 				try {
 					commentST.close();
+				} catch (Exception e) {}
+			}
+
+			if (unsavedCommentST != null) {
+				try {
+					unsavedCommentST.close();
 				} catch (Exception e) {}
 			}
 		}
 
 		return result;
 	}
+
+	private List<Comment> transformResultSetInCommentCollection(ResultSet rs) throws Exception {
+		
+		List<Comment> result = new ArrayList<Comment>();
+
+		if (rs == null) {
+			return result;
+        }
+
+        while (rs.next()) {
+            result.add(getCommentFromResult(rs));
+        }
+
+        return result;
+    }
 
 	public boolean postExists(String postId) throws Exception {
 		
@@ -910,5 +942,44 @@ public class PersistenceManager {
 		}
 
 		return false;
+	}
+
+	public Comment getAutosavedComment(String commentId) {
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("getAutosavedComment(" + commentId + ")");
+        }
+
+		Connection connection = null;
+		PreparedStatement st = null;
+		try {
+			connection = sakaiProxy.borrowConnection();
+			st = sqlGenerator.getSelectAutosavedComment(commentId, connection);
+			ResultSet rs = st.executeQuery();
+			List<Comment> comments = transformResultSetInCommentCollection(rs);
+
+			if (comments.size() == 0) {
+				return null;
+			}
+			if (comments.size() > 1) {
+				logger.error("getAutosavedComment: there is more than one comment with id:" + commentId);
+				return null;
+			}
+
+			return comments.get(0);
+		} catch (Exception e) {
+			logger.error("Caught exception whilst getting autosaved comment", e);
+			return null;
+		} finally {
+
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception e) {
+				}
+			}
+
+			sakaiProxy.returnConnection(connection);
+		}
 	}
 }

@@ -190,20 +190,25 @@ var LearningLogUtils;
 		$('#ll_post_form').submit();
 	}
 
-	LearningLogUtils.saveCommentAsDraft = function(autosave) {
-		return LearningLogUtils.storeComment('PRIVATE', autosave);
+	LearningLogUtils.autosaveComment = function() {
+
+		if(!SakaiUtils.isEditorDirty('blog_content_editor')) {
+			return 0;
+		}
+	
+		return LearningLogUtils.storeComment('AUTOSAVE');
+	}
+
+	LearningLogUtils.saveCommentAsDraft = function() {
+		return LearningLogUtils.storeComment('PRIVATE');
 	}
 
 	LearningLogUtils.publishComment = function() {
 	
-		if(!confirm(blog_publish_comment_message)) {
-			return false;
-		}
-
-		LearningLogUtils.storeComment('READY', false);
+		LearningLogUtils.storeComment('READY');
 	}
 	
-	LearningLogUtils.storeComment = function(visibility, autosave) {
+	LearningLogUtils.storeComment = function(visibility) {
 
 		var comment = {
 				'id':$('#blog_comment_id_field').val(),
@@ -223,7 +228,7 @@ var LearningLogUtils;
 
                 $('#blog_comment_id_field').val(id);
                 
-                if(autosave) {
+                if(visibility === 'AUTOSAVE') {
 
                     SakaiUtils.resetEditor('blog_content_editor');
 

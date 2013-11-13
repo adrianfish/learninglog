@@ -87,7 +87,7 @@ public class NewPostNotification extends SiteEmailNotification {
 			e.printStackTrace();
 		}
 		
-		return rb.getFormattedMessage("noti.newpost", new Object[]{creatorName,post.getTitle(),siteTitle,ServerConfigurationService.getServerUrl() + post.getUrl()});
+		return rb.getFormattedMessage("noti.newpost", new Object[]{creatorName, post.getTitle(), siteTitle, post.getUrl()});
 	}
 	
 	protected String getSubject(Event event) {
@@ -110,13 +110,16 @@ public class NewPostNotification extends SiteEmailNotification {
 		Reference ref = EntityManager.newReference(event.getResource());
         Post post = (Post) ref.getEntity();
 
+        String siteId = post.getSiteId();
+
 		Set<String> tutorUserIds = new TreeSet<String>();
 
-		Set<Role> sakaiRoles = sakaiProxy.getSiteRoles(post.getSiteId());
+		Set<Role> sakaiRoles = sakaiProxy.getSiteRoles(siteId);
 		for (Role sakaiRole : sakaiRoles) {
-			String llRole = persistenceManager.getLLRole(post.getSiteId(), sakaiRole.getId());
+            String sakaiRoleId = sakaiRole.getId();
+			String llRole = persistenceManager.getLLRole(siteId, sakaiRoleId);
 			if (Roles.TUTOR.equals(llRole)) {
-				tutorUserIds.addAll(sakaiProxy.getUsersInRole(post.getSiteId(), sakaiRole.getId()));
+				tutorUserIds.addAll(sakaiProxy.getUsersInRole(siteId, sakaiRoleId));
 			}
 		}
 
@@ -130,7 +133,7 @@ public class NewPostNotification extends SiteEmailNotification {
             } catch (UserNotDefinedException unde) {
             }
         }
-        
+
 	    return tutors;
 	}
 	

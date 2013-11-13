@@ -14,12 +14,13 @@ import org.sakaiproject.entitybroker.entityprovider.capabilities.Describeable;
 import org.sakaiproject.entitybroker.entityprovider.capabilities.Inputable;
 import org.sakaiproject.entitybroker.entityprovider.extension.Formats;
 import org.sakaiproject.entitybroker.util.AbstractEntityProvider;
+import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.learninglog.api.*;
 
 import lombok.Setter;
 
 @Setter
-public final class LearningLogCommentEntityProvider extends AbstractEntityProvider implements CoreEntityProvider, AutoRegisterEntityProvider, Inputable, Createable, Describeable, Deleteable {
+public final class LearningLogCommentEntityProvider extends AbstractEntityProvider implements AutoRegisterEntityProvider, Inputable, Createable, Describeable, Deleteable {
 
 	public final static String ENTITY_PREFIX = "learninglog-comment";
 
@@ -29,8 +30,7 @@ public final class LearningLogCommentEntityProvider extends AbstractEntityProvid
 	private LearningLogManager learningLogManager;
 	private SakaiProxy sakaiProxy = null;
 	
-	public void init() {
-	}
+	public void init() {}
 	
 	public String createEntity(EntityReference ref, Object entity, Map<String, Object> params) {
 		
@@ -45,18 +45,28 @@ public final class LearningLogCommentEntityProvider extends AbstractEntityProvid
 		final Comment comment = new Comment();
 		comment.setId(id);
 		comment.setPostId(postId);
+        comment.setSiteId(siteId);
 		comment.setCreatorId(userId);
-		comment.setContent(content);
 		comment.setVisibility(visibility);
+		comment.setContent(content);
 
-		final boolean isNew = "".equals(comment.getId());
+		boolean isNew = "".equals(comment.getId());
+
+        if(!isNew) {
+            try {
+                learningLogManager.getComment(comment.getId());
+            } catch(IdUnusedException iue) {
+                isNew = true;
+            } catch(Exception e) { }
+        }
 		
 		if(learningLogManager.saveComment(comment)) {
 
 			if(isNew && visibility.equals(Visibilities.READY)) {
+
 				final String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/comment/" + postId;
 				sakaiProxy.postEvent(Constants.BLOG_COMMENT_CREATED_SS,reference,siteId);
-				
+
 				// Send an email to the post author
 				learningLogManager.sendNewCommentAlert(comment);
 			}
@@ -75,10 +85,6 @@ public final class LearningLogCommentEntityProvider extends AbstractEntityProvid
 		return ENTITY_PREFIX;
 	}
 	
-	public String[] getHandledOutputFormats() {
-	    return new String[] { Formats.JSON };
-	}
-	
 	public String[] getHandledInputFormats() {
         return new String[] { Formats.HTML, Formats.JSON, Formats.FORM };
     }
@@ -91,9 +97,5 @@ public final class LearningLogCommentEntityProvider extends AbstractEntityProvid
 		
 		if(learningLogManager.deleteComment(ref.getId()))
 			sakaiProxy.postEvent(Constants.BLOG_COMMENT_DELETED_SS,ref.getId(),siteId);
-	}
-
-	public boolean entityExists(String id) {
-		return true;
 	}
 }

@@ -41,9 +41,9 @@ public class Post implements Entity {
 	@Getter @Setter
 	private String creatorDisplayName = null;
 
-	@Getter
+	@Getter @Setter
 	private List<Comment> comments = new ArrayList<Comment>();
-	
+
 	@Getter @Setter
 	private List<Attachment> attachments = new ArrayList<Attachment>();
 

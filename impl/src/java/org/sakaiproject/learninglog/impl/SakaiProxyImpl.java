@@ -181,11 +181,11 @@ public class SakaiProxyImpl implements SakaiProxy {
 	public void postEvent(String event, String reference) {
 
         UsageSession usageSession = usageSessionService.getSession();
-        eventTrackingService.post(eventTrackingService.newEvent(event, reference, true), usageSession);
+        eventTrackingService.post(eventTrackingService.newEvent(event, reference, true, NotificationService.NOTI_OPTIONAL), usageSession);
 	}
 
-	public void postEvent(String event, String entityId, String siteId) {
-		eventTrackingService.post(eventTrackingService.newEvent(event, entityId, siteId, true, NotificationService.NOTI_OPTIONAL));
+	public void postEvent(String event, String reference, String siteId) {
+		eventTrackingService.post(eventTrackingService.newEvent(event, reference, siteId, true, NotificationService.NOTI_OPTIONAL));
 	}
 
 	public Set<String> getSiteUsers(String siteId) {
@@ -264,8 +264,8 @@ public class SakaiProxyImpl implements SakaiProxy {
 		try {
 			Site site = siteService.getSite(siteId);
 			return site.getUserRole(getCurrentUserId());
-		} catch (Exception e) {
-			e.printStackTrace();
+		} catch (IdUnusedException iue) {
+			logger.error("There is no site with id '" + siteId + "'. Null will be returned.");
 		}
 
 		return null;
@@ -364,8 +364,6 @@ public class SakaiProxyImpl implements SakaiProxy {
 			    resourceId += creatorId + "/" + attachment.name;
             }
         }
-
-        System.out.println("RESOURCE ID AT GET: " + resourceId);
 
 		try {
 			enableSecurityAdvisor();

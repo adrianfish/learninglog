@@ -50,7 +50,8 @@ public class SQLGenerator {
 		ArrayList result = new ArrayList();
 
 		result.add(doTableForPost());
-		result.add(doTableForComments());
+		result.add(doTableForComment());
+		result.add(doTableForAutoSavedComment());
 		result.add(doTableForAuthor());
 		result.add(doTableForRole());
 		result.add(doTableForAttachments());
@@ -136,27 +137,46 @@ public class SQLGenerator {
 		statement.append("(");
 		statement.append("POST_ID CHAR(36) NOT NULL,");
 		statement.append("SITE_ID " + VARCHAR + "(255), ");
+		statement.append("CREATOR_ID " + VARCHAR + "(255) NOT NULL, ");
 		statement.append("TITLE " + VARCHAR + "(255) NOT NULL, ");
 		statement.append("CONTENT " + CLOB + " NOT NULL, ");
+		statement.append("VISIBILITY " + VARCHAR + "(16) NOT NULL, ");
 		statement.append("CREATED_DATE " + TIMESTAMP + " NOT NULL" + ", ");
 		statement.append("MODIFIED_DATE " + TIMESTAMP + ", ");
-		statement.append("CREATOR_ID " + VARCHAR + "(255) NOT NULL, ");
-		statement.append("VISIBILITY " + VARCHAR + "(16) NOT NULL, ");
 		statement.append("CONSTRAINT ll_post_pk PRIMARY KEY (POST_ID)");
 		statement.append(")");
 		return statement.toString();
 	}
 
-	private final String doTableForComments() {
+	private final String doTableForComment() {
 		StringBuilder statement = new StringBuilder();
 		statement.append("CREATE TABLE LL_COMMENT");
 		statement.append("(");
 		statement.append("COMMENT_ID CHAR(36) NOT NULL,");
 		statement.append("POST_ID CHAR(36) NOT NULL,");
+		statement.append("SITE_ID " + VARCHAR + "(255) NOT NULL, ");
 		statement.append("CREATOR_ID CHAR(36) NOT NULL,");
+		statement.append("CONTENT " + CLOB + " NOT NULL, ");
+		statement.append("VISIBILITY " + VARCHAR + "(16) NOT NULL, ");
 		statement.append("CREATED_DATE " + TIMESTAMP + " NOT NULL,");
 		statement.append("MODIFIED_DATE " + TIMESTAMP + " NOT NULL,");
+		statement.append("CONSTRAINT ll_comment_pk PRIMARY KEY (COMMENT_ID)");
+		statement.append(")");
+		return statement.toString();
+	}
+
+    private final String doTableForAutoSavedComment() {
+		StringBuilder statement = new StringBuilder();
+		statement.append("CREATE TABLE LL_AUTOSAVED_COMMENT");
+		statement.append("(");
+		statement.append("COMMENT_ID CHAR(36) NOT NULL,");
+		statement.append("POST_ID CHAR(36) NOT NULL,");
+		statement.append("SITE_ID " + VARCHAR + "(255) NOT NULL, ");
+		statement.append("CREATOR_ID CHAR(36) NOT NULL,");
 		statement.append("CONTENT " + CLOB + " NOT NULL, ");
+		statement.append("VISIBILITY " + VARCHAR + "(16) NOT NULL, ");
+		statement.append("CREATED_DATE " + TIMESTAMP + " NOT NULL,");
+		statement.append("MODIFIED_DATE " + TIMESTAMP + " NOT NULL,");
 		statement.append("CONSTRAINT ll_comment_pk PRIMARY KEY (COMMENT_ID)");
 		statement.append(")");
 		return statement.toString();
@@ -189,12 +209,15 @@ public class SQLGenerator {
 	}
 
 	protected String doTableForAttachments() {
-
 		return "CREATE TABLE LL_ATTACHMENTS (ID INT NOT NULL AUTO_INCREMENT,POST_ID CHAR(36) NOT NULL, NAME " + VARCHAR + "(255) NOT NULL, PRIMARY KEY(ID))";
 	}
 
 	public String getSelectComments(String postId) {
 		return "SELECT * FROM LL_COMMENT WHERE POST_ID = '" + postId + "' ORDER BY CREATED_DATE ASC";
+	}
+
+	public String getSelectUnsavedAutosavedComments(String postId) {
+		return "SELECT * FROM LL_AUTOSAVED_COMMENT WHERE POST_ID = '" + postId + "' AND COMMENT_ID NOT IN (SELECT COMMENT_ID FROM LL_COMMENT)";
 	}
 
 	public String getSelectAllPost(String siteId) {
@@ -209,35 +232,91 @@ public class SQLGenerator {
 		return "SELECT * FROM LL_COMMENT WHERE COMMENT_ID = '" + commentId + "'";
 	}
 
-	public List<PreparedStatement> getSaveStatementsForComment(Comment comment, Connection connection) throws Exception {
+	public List<PreparedStatement> getInsertStatementsForAutoSavedComment(Comment comment, Connection connection) throws Exception {
+
+		List<PreparedStatement> statements = new ArrayList<PreparedStatement>();
+
+		if ("".equals(comment.getId())) {
+			comment.setId(UUID.randomUUID().toString());
+        } else {
+            // We always replace autosaved posts with the latest, so delete the old one.
+            statements.add(getDeleteAutosavedCommentStatement(comment.getId(), connection));
+        }
+
+		String sql = "INSERT INTO LL_AUTOSAVED_COMMENT (COMMENT_ID,POST_ID,SITE_ID,CREATOR_ID,VISIBILITY,CREATED_DATE,MODIFIED_DATE,CONTENT) VALUES (?,?,?,?,'" + Visibilities.AUTOSAVE + "',?,?,?)";
+
+		PreparedStatement commentST = connection.prepareStatement(sql);
+		commentST.setString(1, comment.getId());
+		commentST.setString(2, comment.getPostId());
+		commentST.setString(3, comment.getSiteId());
+		commentST.setString(4, comment.getCreatorId());
+		commentST.setTimestamp(5, new Timestamp(comment.getCreatedDate()));
+		commentST.setTimestamp(6, new Timestamp(comment.getModifiedDate()));
+		commentST.setString(7, comment.getContent());
+
+		statements.add(commentST);
+
+		return statements;
+	}
+
+	public PreparedStatement getDeleteAutosavedCommentStatement(String commentId, Connection connection) throws Exception {
+
+		PreparedStatement st = connection.prepareStatement("DELETE FROM LL_AUTOSAVED_COMMENT WHERE COMMENT_ID = ?");
+		st.setString(1, commentId);
+		return st;
+	}
+
+	public List<PreparedStatement> getInsertStatementsForComment(Comment comment, Connection connection) throws Exception {
 		
 		List<PreparedStatement> statements = new ArrayList<PreparedStatement>();
 
-		Statement testST = null;
+		Statement existingCommentST = null;
+		Statement postST = null;
+
+        boolean isNew = false;
 
 		try {
-			if ("".equals(comment.getId())) {
-				comment.setId(UUID.randomUUID().toString());
 
-				String sql = "INSERT INTO LL_COMMENT VALUES(?,?,?,?,?,?,?)";
+			if ("".equals(comment.getId())) {
+                isNew = true;
+				comment.setId(UUID.randomUUID().toString());
+            } else {
+
+                // We always replace autosaved posts with the latest, so delete the old one.
+                statements.add(getDeleteAutosavedCommentStatement(comment.getId(), connection));
+
+				existingCommentST = connection.createStatement();
+                ResultSet existingRS = existingCommentST.executeQuery("SELECT * FROM LL_COMMENT WHERE COMMENT_ID = '" + comment.getId() + "'");
+                if(!existingRS.next()) {
+                    // This situation will arise if an autosave has successfully happened, but
+                    // and explicit save hasn't been carried out yet.
+                    isNew = true;
+                }
+                existingRS.close();
+            }
+
+			if (isNew) {
+
+				String sql = "INSERT INTO LL_COMMENT (COMMENT_ID,POST_ID,SITE_ID,CREATOR_ID,VISIBILITY,CREATED_DATE,MODIFIED_DATE,CONTENT) VALUES(?,?,?,?,?,?,?,?)";
 
 				PreparedStatement statement = connection.prepareStatement(sql);
 
 				statement.setString(1, comment.getId());
 				statement.setString(2, comment.getPostId());
-				statement.setString(3, comment.getCreatorId());
-				statement.setString(4, comment.getVisibility());
-				statement.setTimestamp(5, new Timestamp(comment.getCreatedDate()));
-				statement.setTimestamp(6, new Timestamp(comment.getModifiedDate()));
-				statement.setString(7, comment.getContent());
+				statement.setString(3, comment.getSiteId());
+				statement.setString(4, comment.getCreatorId());
+				statement.setString(5, comment.getVisibility());
+				statement.setTimestamp(6, new Timestamp(comment.getCreatedDate()));
+				statement.setTimestamp(7, new Timestamp(comment.getModifiedDate()));
+				statement.setString(8, comment.getContent());
 
 				statements.add(statement);
 
-				testST = connection.createStatement();
-				ResultSet rs = testST.executeQuery("SELECT * FROM LL_POST WHERE POST_ID = '" + comment.getPostId() + "'");
-				if (rs.next()) {
-					String blogCreatorId = rs.getString("CREATOR_ID");
-					String siteId = rs.getString("SITE_ID");
+				postST = connection.createStatement();
+				ResultSet postRS = postST.executeQuery("SELECT * FROM LL_POST WHERE POST_ID = '" + comment.getPostId() + "'");
+				if (postRS.next()) {
+					String blogCreatorId = postRS.getString("CREATOR_ID");
+					String siteId = postRS.getString("SITE_ID");
 
 					PreparedStatement authorST = connection.prepareStatement("UPDATE LL_AUTHOR SET TOTAL_COMMENTS = TOTAL_COMMENTS + 1,LAST_COMMENT_DATE = ?,LAST_COMMENT_AUTHOR = ? WHERE USER_ID = ? AND SITE_ID = ?");
 					authorST.setTimestamp(1, new Timestamp(comment.getCreatedDate()));
@@ -247,23 +326,30 @@ public class SQLGenerator {
 
 					statements.add(authorST);
 				}
-				rs.close();
+				postRS.close();
 			} else {
-				String sql = "UPDATE LL_COMMENT SET CONTENT = ?, MODIFIED_DATE = ?, VISIBILITY = ? WHERE COMMENT_ID = ?";
-				PreparedStatement statement = connection.prepareStatement(sql);
 
-				statement.setString(1, comment.getContent());
-				statement.setTimestamp(2, new Timestamp(comment.getModifiedDate()));
-				statement.setString(3, comment.getVisibility());
-				statement.setString(4, comment.getId());
-				statements.add(statement);
+                String sql = "UPDATE LL_COMMENT SET CONTENT = ?, MODIFIED_DATE = ?, VISIBILITY = ? WHERE COMMENT_ID = ?";
+                PreparedStatement statement = connection.prepareStatement(sql);
+
+                statement.setString(1, comment.getContent());
+                statement.setTimestamp(2, new Timestamp(comment.getModifiedDate()));
+                statement.setString(3, comment.getVisibility());
+                statement.setString(4, comment.getId());
+                statements.add(statement);
 			}
 		} finally {
-			if (testST != null) {
+
+			if (postST != null) {
 				try {
-					testST.close();
-				} catch (Exception e) {
-				}
+					postST.close();
+				} catch (Exception e) {}
+			}
+
+			if (existingCommentST != null) {
+				try {
+					existingCommentST.close();
+				} catch (Exception e) {}
 			}
 		}
 
@@ -512,6 +598,8 @@ public class SQLGenerator {
 			commentST.setString(1, commentId);
 			statements.add(commentST);
 
+            statements.add(getDeleteAutosavedCommentStatement(commentId, connection));
+
 			return statements;
 		} finally {
 			if (testST != null) {
@@ -545,7 +633,7 @@ public class SQLGenerator {
 
 			for (String sakaiRole : roles.keySet()) {
 				String llRole = roles.get(sakaiRole);
-				PreparedStatement st1 = conn.prepareStatement("INSERT INTO LL_ROLE VALUES(?,?,?)");
+				PreparedStatement st1 = conn.prepareStatement("INSERT INTO LL_ROLE (SITE_ID,SAKAI_ROLE,LL_ROLE) VALUES(?,?,?)");
 				st1.setString(1, siteId);
 				st1.setString(2, sakaiRole);
 				st1.setString(3, llRole);
@@ -573,5 +661,12 @@ public class SQLGenerator {
 		PreparedStatement pst = connection.prepareStatement("DELETE FROM LL_ATTACHMENTS WHERE NAME = ?");
 		pst.setString(1, name);
 		return pst;
+	}
+
+	public PreparedStatement getSelectAutosavedComment(String commentId, Connection connection) throws Exception {
+
+		PreparedStatement st = connection.prepareStatement("SELECT * FROM LL_AUTOSAVED_COMMENT WHERE COMMENT_ID = ?");
+		st.setString(1, commentId);
+		return st;
 	}
 }

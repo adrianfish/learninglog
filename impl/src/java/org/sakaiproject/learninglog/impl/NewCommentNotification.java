@@ -81,14 +81,16 @@ public class NewCommentNotification extends SiteEmailNotification {
         
         Post post = null;
 		String creatorName = "";
+        String siteTitle = "";
 		try {
             post = persistenceManager.getPost(comment.getPostId());
 			creatorName = UserDirectoryService.getUser(comment.getCreatorId()).getDisplayName();
+			siteTitle = SiteService.getSite(comment.getSiteId()).getTitle();
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
 		
-		return rb.getFormattedMessage("noti.newcomment", new Object[]{creatorName,post.getTitle(),ServerConfigurationService.getServerUrl() + post.getUrl()});
+		return rb.getFormattedMessage("noti.newcomment", new Object[]{creatorName, post.getTitle(), siteTitle, post.getUrl()});
 	}
 	
 	protected String getSubject(Event event) {

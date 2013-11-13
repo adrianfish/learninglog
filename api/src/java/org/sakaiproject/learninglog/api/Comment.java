@@ -64,13 +64,8 @@ public class Comment implements Entity {
     @Setter
     private String url;
 
-    /*
-    @Getter @Setter
-    private boolean autosaving;
-
-    @Getter @Setter
-    private boolean publishing;
-    */
+	@Getter @Setter
+	private Comment autosavedVersion = null;
 
     public Comment() {
     	this("");
@@ -107,6 +102,14 @@ public class Comment implements Entity {
 		
 		this.createdDate = createdDate;
 		this.modifiedDate = createdDate;
+	}
+
+	public boolean isAutoSave() {
+		return Visibilities.AUTOSAVE.equals(visibility);
+	}
+
+	public boolean isReady() {
+		return Visibilities.READY.equals(visibility);
 	}
 
     /** START ENTITY IMPL */

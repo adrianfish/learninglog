@@ -5,6 +5,8 @@ var blogCurrentPosts = null;
 var blogCurrentUser = null;
 var blogHomeState = null;
 
+var llAttachmentsDirty = false;
+
 var autosave_id = null;
 
 (function() {
@@ -136,13 +138,7 @@ function switchState(state,args) {
 	 						}
                         }).tablesorterPager({container: $("#blogBloggerPager"),positionFixed: false});
 	 						
-	 				try {
- 						if(window.frameElement) {
-	 						setMainFrameHeight(window.frameElement.id);
-	 					}
-					} catch(err) {
-						// This is likely under an LTI provision scenario
-					}
+                    resizeMainFrame();
 	   			});
 			},
 			error : function(xmlHttpRequest,status,errorThrown) {
@@ -181,16 +177,17 @@ function switchState(state,args) {
 					SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPosts[i],'post_' + blogCurrentPosts[i].id);
                 }
 
-				try {
-	 				if(window.frameElement) {
-	 					$(document).ready(function() {
-	 						setMainFrameHeight(window.frameElement.id);
-	 					});
-					}
-				} catch(err) {
-					// This is likely under an LTI provision scenario
-				}
-			},
+                $(document).ready(function() {
+
+                    $('.ll_toggle_comments_link').click(function (e) {
+                        var postId = this.id.substring(0,this.id.indexOf('_comments_toggle'));
+                        $('#' + postId + '_comments').toggle();
+                        resizeMainFrame();
+                    });
+
+                    resizeMainFrame();
+                });
+            },
 			error : function(xmlHttpRequest,status,errorThrown) {
 				alert("Failed to get posts. Reason: " + errorThrown);
 			}
@@ -220,13 +217,7 @@ function switchState(state,args) {
 
 			if(blogCurrentPost.comments.length > 0) $('.comments').show();
 
-			try {
-	 			if(window.frameElement) {
-	 				setMainFrameHeight(window.frameElement.id);
-	 			}
-			} catch(err) {
-				// This is likely under an LTI provision scenario
-			}
+            resizeMainFrame();
 	 	});
 	} else if('createPost' === state) {
 
@@ -258,7 +249,10 @@ function switchState(state,args) {
  			
 	    	$('#ll_attachment').MultiFile( {
 		       		max: 5,
-					namePattern: '$name_$i'
+					namePattern: '$name_$i',
+                    afterFileAppend: function(element, value, master_element) {
+                        llAttachmentsDirty = true;
+                    }
 				} );
 				
 			var savePostOptions = { 
@@ -284,17 +278,20 @@ function switchState(state,args) {
                         if(post.attachments.length > 0) {
                             // Now add the current attachments
                             var attachments = $('#attachments-area').show();
-                            //attachments.append("<span id=\"current_attachments_label\">Current attachments:</span><br /><br />");
                             for(var i=0,j=post.attachments.length;i<j;i++) {
                                 var attachment = post.attachments[i];
                                 attachments.append("<div id=\"file_" + i +"\"><span>" + attachment.name + "</span><a href=\"#\" onclick=\"LearningLogUtils.removeAttachment('" + attachment.id + "','" + post.id + "','file_" + i +"');\" title=\"Delete attachment\"><img src=\"/library/image/silk/cross.png\" width=\"16\" height=\"16\"/></a><br /></div>");
                             }
                         }
+
 						// Flash the autosaved message
 						$('#learninglog_autosaved_message').show();
 						setTimeout(function() {
 								$('#learninglog_autosaved_message').fadeOut(200);
 							},2000);
+
+                        SakaiUtils.resetEditor('blog_content_editor');
+                        llAttachmentsDirty = false;
 					}
    				},
    				beforeSubmit: function(arr, $form, options) {
@@ -309,7 +306,7 @@ function switchState(state,args) {
 
 			// Start the auto saver
 			autosave_id = setInterval(function() {
-					if(!SakaiUtils.isEditorDirty('blog_content_editor') || $('#blog_title_field').val().length < 4) {
+					if(!(SakaiUtils.isEditorDirty('blog_content_editor') || llAttachmentsDirty) || $('#blog_title_field').val().length < 4) {
 						return;
 					}
 					
@@ -324,6 +321,8 @@ function switchState(state,args) {
 
 		blogCurrentPost = LearningLogUtils.findPost(args.postId);
 
+		LearningLogUtils.addFormattedDatesToCurrentPost();
+
 		var comment = {id: '',postId: args.postId,content: ''};
 
 		if(args.commentId) {
@@ -335,6 +334,12 @@ function switchState(state,args) {
 					break;
 				}
 			}
+
+			if(comment.autosavedVersion) {
+				if(confirm('There is an autosaved version of this comment. Do you want to use that instead?')) {
+					comment = comment.autosavedVersion;
+				}
+			}
 		}
 
 		SakaiUtils.renderTrimpathTemplate('blog_create_comment_template',comment,'blog_content');
@@ -343,11 +348,15 @@ function switchState(state,args) {
 
 			SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPost,'blog_post_' + args.postId);
 
-			$('#blog_save_comment_button').click(function (e) { LearningLogUtils.saveCommentAsDraft(false); });
+			$('#blog_save_comment_button').click(LearningLogUtils.saveCommentAsDraft);
 
 			$('#blog_publish_comment_button').click(LearningLogUtils.publishComment);
+
+			$('#blog_cancel_button').click(function (e) {
+                switchState('userPosts',{'userId':blogCurrentPost.creatorId});
+            });
 			
- 			SakaiUtils.setupWysiwygEditor('blog_content_editor',600,400,'Default',startupArgs.blogSiteId);
+ 			SakaiUtils.setupWysiwygEditor('blog_content_editor',600,400);
 
 			// Start the auto saver
 			autosave_id = setInterval(function() {
@@ -355,7 +364,7 @@ function switchState(state,args) {
 						return;
 					}
 					
-					LearningLogUtils.saveCommentAsDraft(true);
+					LearningLogUtils.autosaveComment();
 				},10000);
 		});
 	} else if('permissions' === state) {
@@ -372,13 +381,7 @@ function switchState(state,args) {
 				return switchState('home');
 			});
 
-			try {
-				if(window.frameElement) {
-					setMainFrameHeight(window.frameElement.id);
-				}
-			} catch(err) {
-				// This is likely under an LTI provision scenario
-			}
+            resizeMainFrame();
 		});
 	} else if('viewRecycled' === state) {
 
@@ -402,15 +405,9 @@ function switchState(state,args) {
 				$('#blog_really_delete_button').click(LearningLogUtils.deleteSelectedPosts);
 				$('#blog_restore_button').click(LearningLogUtils.restoreSelectedPosts);
 
-				try {
-	 				if(window.frameElement) {
-	 					$(document).ready(function() {
-	 						setMainFrameHeight(window.frameElement.id);
-	 					});
-					}
-				} catch(err) {
-					// This is likely under an LTI provision scenario
-				}
+                $(document).ready(function() {
+                    resizeMainFrame();
+                });
 			},
 			error : function(xmlHttpRequest,status,errorThrown) {
 				alert("Failed to get posts. Reason: " + errorThrown);
@@ -420,25 +417,42 @@ function switchState(state,args) {
 }
 
 function toggleFullContent(v) {
-	try {
-
- 		if(window.frameElement) {
-
-			$(document).ready(function() {
- 				setMainFrameHeight(window.frameElement.id);
-			});
-		}
-	} catch(err) {
-		// This is likely under an LTI provision scenario
-	}
+    $(document).ready(function() {
+        resizeMainFrame();
+    });
 	
 	if(v.checked) {
 
 		$('.content').hide();
 		$('.comments').hide();
+		$('.comment_toggle').hide();
 	} else {
 
 		$('.content').show();
 		$('.comments').show();
+		$('.comment_toggle').show();
 	}
+}
+
+function toggleComments(v) {
+    $(document).ready(function() {
+        resizeMainFrame();
+    });
+	
+	if(v.checked) {
+		$('.comments').show();
+	} else {
+		$('.comments').hide();
+	}
+}
+
+function resizeMainFrame() {
+
+    try {
+        if(window.frameElement) {
+            setMainFrameHeight(window.frameElement.id);
+        }
+    } catch(err) {
+        // This is likely under an LTI provision scenario
+    }
 }

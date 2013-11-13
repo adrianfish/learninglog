@@ -138,7 +138,7 @@ ${sakaiHtmlHead}
     <input id="blog_comment_id_field" type="hidden" value="${id}"/>
     <input id="blog_publish_comment_button" type="button" value="${publish}" title="Publishing will make this comment visible to the post author"/>
     <input id="blog_save_comment_button" type="button" value="Save as Draft" title="Saving as Draft will save your changes but will not make those changes visible to the post author"/>
-    <input type="button" value="${cancel}" onclick="switchState('home');"/>
+    <input id="blog_cancel_button" type="button" value="${cancel}" />
     <span id="learninglog_autosaved_message">${learninglog_autosaved_message_label}</span>
 -->
 </div>
@@ -243,7 +243,10 @@ ${sakaiHtmlHead}
 
 			<br />
 
-			<span id="${id}_comments" class="comments">
+            {if comments.length > 0}
+            <span class="comment_toggle"><span>${number_of_comments_prefix} ${comments.length} ${number_of_comments_suffix} <a href="javascript:;" id="${id}_comments_toggle" class="ll_toggle_comments_link">${show_hide_comments}</a></span></span>
+            {/if}
+			<div id="${id}_comments" class="comments">
 					{for comment in comments}
                     {if comment.visibility == 'READY' || comment.creatorId === blogCurrentUser.id}
 					<div class="blog_comment">
@@ -252,6 +255,9 @@ ${sakaiHtmlHead}
 							<div style="float:left;"><span>${comment.creatorDisplayName}</span><br/><span class="blog_comment_date">Created: ${comment.formattedCreatedDate}</span><br/><span class="blog_comment_date">Modified: ${comment.formattedModifiedDate}</span></div>
                             {if comment.visibility == 'PRIVATE'}
                             <div class="learninglog_draft_label">DRAFT</div>
+                            {/if}
+                            {if comment.visibility == 'AUTOSAVE'}
+                            <div class="learninglog_draft_label">AUTOSAVED</div>
                             {/if}
 						</div>
 						<div class="blog_comment_content">${comment.content}</div>
@@ -264,36 +270,7 @@ ${sakaiHtmlHead}
                     </div>
                     {/if}
 					{/for}
-			</span>
-		</div>
-	</div>
--->
-</div>
-
-<div id="blog_all_posts_template" style="display:none"><!--
-	<h2>${blog_worksite_posts_label}</h2>
-	{if posts.length <= 0}
-	<div id="noPostsLabel"><span>${noPosts}</span></div>
-	{else}
-	<div style="clear: left; margin-top: 10px;" id="viewOptions">
-   		<input type="checkbox" onclick="toggleFullContent(this);"/>
-		<span>${blog_show_title_only_label}</span>
-   	</div>
-	{/if}
-    <div id="postsWrapper">
-    	<br />
-  	 	<div id="posts">
-	  	    <table class="tableHeader">
-				<tbody>
-					{for post in posts}
-					<tr>
-						<td>
-							<div id="post_${post.id}"></div>
-						</td>
-					</tr>
-					{/for}
-				</tbody>
-			</table>
+			</div>
 		</div>
 	</div>
 -->
@@ -307,6 +284,8 @@ ${sakaiHtmlHead}
 	<div style="clear: left; margin-top: 10px;" id="viewOptions">
    		<input type="checkbox" onclick="toggleFullContent(this);"/>
 		<span>${blog_show_title_only_label}</span>
+   		<input type="checkbox" onclick="toggleComments(this);"/>
+		<span>${blog_show_all_comments_label}</span>
    	</div>
 	{/if}
     <div id="postsWrapper">

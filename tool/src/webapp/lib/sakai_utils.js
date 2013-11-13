@@ -51,17 +51,19 @@ var SakaiUtils;
 		var firstNode = templateNode.firstChild;
 		var template = null;
 
-		if ( firstNode && ( firstNode.nodeType === 8 || firstNode.nodeType === 4))
+		if ( firstNode && ( firstNode.nodeType === 8 || firstNode.nodeType === 4)) {
   			template = templateNode.firstChild.data.toString();
-		else
+        } else {
    			template = templateNode.innerHTML.toString();
+        }
 
 		var trimpathTemplate = TrimPath.parseTemplate(template,templateName);
 
    		var render = trimpathTemplate.process(contextObject);
 
-		if (output)
+		if (output) {
 			document.getElementById(output).innerHTML = render;
+        }
 
 		return render;
 	}
@@ -75,9 +77,7 @@ var SakaiUtils;
         sakai.editor.launch(textarea_id,{},width,height);
 
         CKEDITOR.instances[textarea_id].on('instanceReady',function (e) {
-            if(window.frameElement) {
-                setMainFrameHeight(window.frameElement.id);
-            }
+            resizeMainFrame();
         });
 	}
 	

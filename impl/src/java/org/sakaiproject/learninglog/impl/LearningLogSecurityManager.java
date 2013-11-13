@@ -21,10 +21,9 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.apache.log4j.Logger;
-import org.sakaiproject.learninglog.api.Comment;
-import org.sakaiproject.learninglog.api.SakaiProxy;
-import org.sakaiproject.learninglog.api.Post;
-import org.sakaiproject.learninglog.api.Roles;
+
+import org.sakaiproject.authz.api.Role;
+import org.sakaiproject.learninglog.api.*;
 
 import lombok.Setter;
 
@@ -136,35 +135,52 @@ public class LearningLogSecurityManager {
 
 	public boolean canCurrentUserReadComment(Comment comment) {
 
+        if(comment == null) {
+
+            logger.warn("Null comment supplied. Returning false ...");
+            return false;
+        }
+
+        String currentUserId = sakaiProxy.getCurrentUserId();
+
+        if(currentUserId == null) {
+            logger.warn("Not logged in. Returning false ...");
+            return false;
+        }
+
     	String siteId = comment.getSiteId();
+
+        Role sakaiRole = sakaiProxy.getRoleForCurrentUser(siteId);
+
+        if(sakaiRole == null) {
+            logger.warn("No role. Returning false ...");
+            return false;
+        }
 
         Post post = null;
 
         try {
             post = persistenceManager.getPost(comment.getPostId());
         } catch (Exception e) {
-            e.printStackTrace();
+            logger.error("Failed to get post.", e);
             return false;
         }
 
-	    String llRole = persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForCurrentUser(siteId).getId());
-		
-		// Only tutors can view recycled posts
-		if(post.isRecycled() && Roles.TUTOR.equals(llRole)) {
-			return true;
+	    String llRole = persistenceManager.getLLRole(siteId, sakaiRole.getId());
+
+        if(post.isRecycled() && Roles.TUTOR.equals(llRole)) {
+            // The enclosing post has been recycled and I *am* a tutor. I can see it.
+            return true;
         }
-			
-		if(post.isReady() && Roles.TUTOR.equals(llRole)) {
-			return true;
+
+        if(currentUserId.equals(comment.getCreatorId())) {
+            // I wrote it. I can see it.
+            return true;
+        } else if(comment.isReady() && Roles.TUTOR.equals(llRole)) {
+            // It's ready and I'm a tutor. I can see it.
+            return true;
         }
-		
-		String currentUser = sakaiProxy.getCurrentUserId();
-		
-		// If the current user is authenticated and the post author, yes.
-		if(currentUser != null && currentUser.equals(post.getCreatorId())) {
-			return true;
-        }
-		
+
 		return false;
 	}
 
