@@ -139,7 +139,7 @@ var LearningLogUtils;
 			timeout: 30000,
 			dataType: 'text',
 		   	success : function(result) {
-				switchState('home');
+                location.reload();
 			},
 			error : function(xmlHttpRequest,status,error) {
 				alert("Failed to create meeting. Status: " + status + '. Error: ' + error);
