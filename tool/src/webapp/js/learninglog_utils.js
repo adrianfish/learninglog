@@ -398,7 +398,7 @@ var LearningLogUtils;
 	 		url : "/direct/learninglog-comment/" + commentId + "?siteId=" + startupArgs.blogSiteId,
 			type:'DELETE',
 		   	success : function(text,status) {
-				switchState('home');
+                switchState('userPosts',{'userId':blogCurrentPost.creatorId});
 			},
 			error : function(xmlHttpRequest,status,error) {
 				alert("Failed to delete comment. Status: " + status + ". Error: " + error);

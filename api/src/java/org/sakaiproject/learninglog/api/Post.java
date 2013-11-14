@@ -61,10 +61,6 @@ public class Post implements Entity {
 		modifiedDate = now;
 	}
 
-	public final void addComment(Comment comment) {
-		comments.add(comment);
-	}
-
 	public final boolean isPrivate() {
 		return Visibilities.PRIVATE.equals(visibility);
 	}

@@ -63,6 +63,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
 
 		Post post = persistenceManager.getPost(postId);
 		if (securityManager.canCurrentUserReadPost(post)) {
+            post.setComments(securityManager.filterComments(post));
 			return post;
         } else {
 			throw new Exception("The current user does not have permissions to read this post.");
@@ -115,7 +116,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
         }
 
 		Comment comment = persistenceManager.getComment(commentId);
-		if (securityManager.canCurrentUserReadComment(comment)) {
+		if (securityManager.canCurrentUserReadComment(comment, null)) {
 			return comment;
         } else {
 			throw new Exception("The current user does not have permissions to read this comment.");

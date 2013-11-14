@@ -146,14 +146,16 @@ function switchState(state,args) {
 			}
 	   	});
 	} else if('userPosts' === state) {
+
 	    $('#blog_home_link > span').addClass('current');
 
 		// Default to using the current session user id ...
 		var userId = blogCurrentUser.id;
 		
 		// ... but override it with any supplied one
-		if(args && args.userId)
+		if(args && args.userId) {
 			userId = args.userId;
+        }
 
 		var url = "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId + "&creatorId=" + userId;
 
@@ -173,6 +175,7 @@ function switchState(state,args) {
 				SakaiUtils.renderTrimpathTemplate('blog_user_posts_template',{'creatorId':userId,'posts':blogCurrentPosts},'blog_content');
 				$('#blog_author_profile').html(profileMarkup);
 	 			for(var i=0,j=blogCurrentPosts.length;i<j;i++) {
+                    
                     LearningLogUtils.addEscapedCreatorIdsToComments(blogCurrentPosts[i]);
 					SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPosts[i],'post_' + blogCurrentPosts[i].id);
                 }
@@ -180,6 +183,7 @@ function switchState(state,args) {
                 $(document).ready(function() {
 
                     $('.ll_toggle_comments_link').click(function (e) {
+
                         var postId = this.id.substring(0,this.id.indexOf('_comments_toggle'));
                         $('#' + postId + '_comments').toggle();
                         resizeMainFrame();

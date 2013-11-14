@@ -275,6 +275,8 @@ public class SQLGenerator {
 
         boolean isNew = false;
 
+        String oldVisibility = null;
+
 		try {
 
 			if ("".equals(comment.getId())) {
@@ -291,6 +293,8 @@ public class SQLGenerator {
                     // This situation will arise if an autosave has successfully happened, but
                     // and explicit save hasn't been carried out yet.
                     isNew = true;
+                } else {
+                    oldVisibility = existingRS.getString("VISIBILITY");
                 }
                 existingRS.close();
             }
@@ -312,21 +316,24 @@ public class SQLGenerator {
 
 				statements.add(statement);
 
-				postST = connection.createStatement();
-				ResultSet postRS = postST.executeQuery("SELECT * FROM LL_POST WHERE POST_ID = '" + comment.getPostId() + "'");
-				if (postRS.next()) {
-					String blogCreatorId = postRS.getString("CREATOR_ID");
-					String siteId = postRS.getString("SITE_ID");
+                if(comment.isReady()) {
+                    postST = connection.createStatement();
+                    ResultSet postRS = postST.executeQuery("SELECT * FROM LL_POST WHERE POST_ID = '" + comment.getPostId() + "'");
+                    if (postRS.next()) {
+                        String blogCreatorId = postRS.getString("CREATOR_ID");
+                        String siteId = postRS.getString("SITE_ID");
 
-					PreparedStatement authorST = connection.prepareStatement("UPDATE LL_AUTHOR SET TOTAL_COMMENTS = TOTAL_COMMENTS + 1,LAST_COMMENT_DATE = ?,LAST_COMMENT_AUTHOR = ? WHERE USER_ID = ? AND SITE_ID = ?");
-					authorST.setTimestamp(1, new Timestamp(comment.getCreatedDate()));
-					authorST.setString(2, comment.getCreatorDisplayName());
-					authorST.setString(3, blogCreatorId);
-					authorST.setString(4, siteId);
-
-					statements.add(authorST);
-				}
-				postRS.close();
+                        PreparedStatement authorST = connection.prepareStatement("UPDATE LL_AUTHOR SET TOTAL_COMMENTS = TOTAL_COMMENTS + 1,LAST_COMMENT_DATE = ?,LAST_COMMENT_AUTHOR = ? WHERE USER_ID = ? AND SITE_ID = ?");
+                        authorST.setTimestamp(1, new Timestamp(comment.getCreatedDate()));
+                        authorST.setString(2, comment.getCreatorDisplayName());
+                        authorST.setString(3, blogCreatorId);
+                        authorST.setString(4, siteId);
+                        statements.add(authorST);
+                    } else {
+			            logger.warn("No post for id '" + comment.getPostId() + "'. The author table will not be updated.");
+                    }
+				    postRS.close();
+                }
 			} else {
 
                 String sql = "UPDATE LL_COMMENT SET CONTENT = ?, MODIFIED_DATE = ?, VISIBILITY = ? WHERE COMMENT_ID = ?";
@@ -337,6 +344,25 @@ public class SQLGenerator {
                 statement.setString(3, comment.getVisibility());
                 statement.setString(4, comment.getId());
                 statements.add(statement);
+
+                if(oldVisibility.equals(Visibilities.PRIVATE) && comment.getVisibility().equals(Visibilities.READY)) {
+                    postST = connection.createStatement();
+                    ResultSet postRS = postST.executeQuery("SELECT * FROM LL_POST WHERE POST_ID = '" + comment.getPostId() + "'");
+                    if (postRS.next()) {
+                        String blogCreatorId = postRS.getString("CREATOR_ID");
+                        String siteId = postRS.getString("SITE_ID");
+
+                        PreparedStatement authorST = connection.prepareStatement("UPDATE LL_AUTHOR SET TOTAL_COMMENTS = TOTAL_COMMENTS + 1,LAST_COMMENT_DATE = ?,LAST_COMMENT_AUTHOR = ? WHERE USER_ID = ? AND SITE_ID = ?");
+                        authorST.setTimestamp(1, new Timestamp(comment.getCreatedDate()));
+                        authorST.setString(2, comment.getCreatorDisplayName());
+                        authorST.setString(3, blogCreatorId);
+                        authorST.setString(4, siteId);
+                        statements.add(authorST);
+                    } else {
+			            logger.warn("No post for id '" + comment.getPostId() + "'. The author table will not be updated.");
+                    }
+				    postRS.close();
+                }
 			}
 		} finally {
 

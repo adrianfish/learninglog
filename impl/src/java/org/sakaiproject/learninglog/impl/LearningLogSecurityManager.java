@@ -97,6 +97,7 @@ public class LearningLogSecurityManager {
 		for(Post post : posts) {
 
 			if(canCurrentUserReadPost(post)) {
+                post.setComments(filterComments(post));
 				filtered.add(post);
 			}
 		}
@@ -133,7 +134,25 @@ public class LearningLogSecurityManager {
 		return false;
 	}
 
-	public boolean canCurrentUserReadComment(Comment comment) {
+	/**
+	 * Tests whether the current user can read each Comment and if not, filters
+	 * that comment out of the resulting list
+	 */
+	public List<Comment> filterComments(Post post) {
+
+		List<Comment> filtered = new ArrayList<Comment>();
+
+		for(Comment comment : post.getComments()) {
+
+			if(canCurrentUserReadComment(comment, post)) {
+				filtered.add(comment);
+			}
+		}
+		
+		return filtered;
+	}
+
+	public boolean canCurrentUserReadComment(Comment comment, Post post) {
 
         if(comment == null) {
 
@@ -157,13 +176,13 @@ public class LearningLogSecurityManager {
             return false;
         }
 
-        Post post = null;
-
-        try {
-            post = persistenceManager.getPost(comment.getPostId());
-        } catch (Exception e) {
-            logger.error("Failed to get post.", e);
-            return false;
+        if(post == null) {
+            try {
+                post = persistenceManager.getPost(comment.getPostId());
+            } catch (Exception e) {
+                logger.error("Failed to get post.", e);
+                return false;
+            }
         }
 
 	    String llRole = persistenceManager.getLLRole(siteId, sakaiRole.getId());
@@ -176,8 +195,8 @@ public class LearningLogSecurityManager {
         if(currentUserId.equals(comment.getCreatorId())) {
             // I wrote it. I can see it.
             return true;
-        } else if(comment.isReady() && Roles.TUTOR.equals(llRole)) {
-            // It's ready and I'm a tutor. I can see it.
+        } else if(comment.isReady() && (Roles.TUTOR.equals(llRole) || post.getCreatorId().equals(currentUserId))) {
+            // It's ready and I'm a tutor OR this is my post. I can see it.
             return true;
         }
 

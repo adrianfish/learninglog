@@ -206,6 +206,9 @@ ${sakaiHtmlHead}
 				<a href="#" onClick="switchState('createPost',{postId:'${id}'});" title="${blog_edit_post_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit"/></a>&nbsp;
 			{/if}
         </span>
+        {if private}
+        <span style="font-weight: bold;color:red;">DRAFT</span>
+        {/if}
         {if attachments.length > 0}
         <span class="attachments">Attachments:</span>
         {/if}
@@ -234,9 +237,6 @@ ${sakaiHtmlHead}
 				<span>
 					<a href="#" onclick="switchState('post',{'postId':'${id}'});" title="${blog_view_post_tooltip}"><span>${title}</span></a>
 				</span>
-				{if private}
-				<img src="/library/image/silk/key.png" title="${blog_private_post_tooltip}" width="16" height="16"/>
-				{/if}
 			</div>
 
 			<div class="content">${content}</div>
@@ -248,7 +248,6 @@ ${sakaiHtmlHead}
             {/if}
 			<div id="${id}_comments" class="comments">
 					{for comment in comments}
-                    {if comment.visibility == 'READY' || comment.creatorId === blogCurrentUser.id}
 					<div class="blog_comment">
 						<div style="overflow:auto; margin-bottom: 10px;">
 							<div style="float:left; margin-right: 10px;"><img src="/direct/profile/${comment.escapedCreatorId}/image" width="50"/></div>
@@ -268,7 +267,6 @@ ${sakaiHtmlHead}
 							<a href="#" onClick="switchState('createComment',{postId:'${id}',commentId:'${comment.id}'});" title="${blog_edit_comment_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit Comment"/></a>
 						{/if}
                     </div>
-                    {/if}
 					{/for}
 			</div>
 		</div>
