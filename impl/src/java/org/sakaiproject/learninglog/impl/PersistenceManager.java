@@ -86,26 +86,21 @@ public class PersistenceManager {
 
 		Connection connection = null;
 		Statement statement = null;
-		ResultSet rs = null;
 
 		try {
 			connection = sakaiProxy.borrowConnection();
 			statement = connection.createStatement();
 			String sql = sqlGenerator.getSelectPost(postId);
-			rs = statement.executeQuery(sql);
+			ResultSet rs = statement.executeQuery(sql);
 			boolean exists = rs.next();
+            rs.close();
 			return exists;
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {}
-			}
 
 			if (statement != null) {
 				try {
 					statement.close();
-				} catch (SQLException e) {}
+				} catch (Exception e) {}
 			}
 
 			sakaiProxy.returnConnection(connection);
@@ -123,19 +118,14 @@ public class PersistenceManager {
 
 		Connection connection = null;
 		Statement statement = null;
-		ResultSet rs = null;
 
 		try {
 			connection = sakaiProxy.borrowConnection();
 			statement = connection.createStatement();
-			rs = statement.executeQuery(sqlGenerator.getSelectAllPost(placementId));
+			ResultSet rs = statement.executeQuery(sqlGenerator.getSelectAllPost(placementId));
 			result = transformResultSetInPostCollection(rs, connection);
+            rs.close();
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {}
-			}
 
 			if (statement != null) {
 				try {
@@ -153,25 +143,21 @@ public class PersistenceManager {
 
 		Connection connection = null;
 		Statement st = null;
-		ResultSet rs = null;
+
 		try {
 			connection = sakaiProxy.borrowConnection();
 			st = connection.createStatement();
 			String sql = sqlGenerator.getSelectComment(commentId);
-			rs = st.executeQuery(sql);
-            Comment comment = null;
+			ResultSet rs = st.executeQuery(sql);
             if(rs.next()) {
-                return getCommentFromResult(rs);
+                Comment comment = getCommentFromResult(rs);
+                rs.close();
+                return comment;
             } else {
+                rs.close();
                 throw new IdUnusedException("There is no comment with the id '" + commentId + "'");
             }
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {
-				}
-			}
 
 			if (st != null) {
 				try {
@@ -250,7 +236,7 @@ public class PersistenceManager {
 				for (PreparedStatement st : statements) {
 					try {
 						st.close();
-					} catch (SQLException e) {}
+					} catch (Exception e) {}
 				}
 			}
 
@@ -295,7 +281,7 @@ public class PersistenceManager {
 				for (PreparedStatement st : statements) {
 					try {
 						st.close();
-					} catch (SQLException e) {}
+					} catch (Exception e) {}
 				}
 			}
 
@@ -349,7 +335,7 @@ public class PersistenceManager {
 				for (PreparedStatement st : statements) {
 					try {
 						st.close();
-					} catch (SQLException e) {}
+					} catch (Exception e) {}
 				}
 			}
 
@@ -357,7 +343,7 @@ public class PersistenceManager {
 				for (PreparedStatement st : attachmentStatements) {
 					try {
 						st.close();
-					} catch (SQLException e) {}
+					} catch (Exception e) {}
 				}
 			}
 
@@ -426,8 +412,11 @@ public class PersistenceManager {
 
 			try {
 				statements = sqlGenerator.getRecycleStatementsForPost(post, connection);
-				for (PreparedStatement st : statements)
+
+				for (PreparedStatement st : statements) {
 					st.executeUpdate();
+                }
+
 				connection.commit();
 				return true;
 			} catch (Exception e) {
@@ -444,7 +433,7 @@ public class PersistenceManager {
 				for (PreparedStatement st : statements) {
 					try {
 						st.close();
-					} catch (SQLException e) {}
+					} catch (Exception e) {}
 				}
 			}
 
@@ -489,7 +478,7 @@ public class PersistenceManager {
 				for (PreparedStatement st : statements) {
 					try {
 						st.close();
-					} catch (SQLException e) {}
+					} catch (Exception e) {}
 				}
 			}
 
@@ -505,23 +494,17 @@ public class PersistenceManager {
 
 		Connection connection = null;
 		Statement st = null;
-		ResultSet rs = null;
 
 		try {
 			connection = sakaiProxy.borrowConnection();
 			st = connection.createStatement();
 			List<String> sqlStatements = sqlGenerator.getSelectStatementsForQuery(query);
 			for (String sql : sqlStatements) {
-				rs = st.executeQuery(sql);
+				ResultSet rs = st.executeQuery(sql);
 				posts.addAll(transformResultSetInPostCollection(rs, connection));
+                rs.close();
 			}
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {
-				}
-			}
 
 			if (st != null) {
 				try {
@@ -539,28 +522,22 @@ public class PersistenceManager {
 
 		Connection connection = null;
 		Statement st = null;
-		ResultSet rs = null;
 		try {
 			connection = sakaiProxy.borrowConnection();
 			st = connection.createStatement();
 			String sql = sqlGenerator.getSelectPost(postId);
-			rs = st.executeQuery(sql);
+			ResultSet rs = st.executeQuery(sql);
 			List<Post> posts = transformResultSetInPostCollection(rs, connection);
 			rs.close();
 
-			if (posts.size() == 0)
+			if (posts.size() == 0) {
 				throw new Exception("getPost: Unable to find post with id:" + postId);
-			if (posts.size() > 1)
+            } else if (posts.size() > 1) {
 				throw new Exception("getPost: there is more than one post with id:" + postId);
+            }
 
 			return posts.get(0);
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {
-				}
-			}
 
 			if (st != null) {
 				try {
@@ -629,14 +606,13 @@ public class PersistenceManager {
 
 				sql = sqlGenerator.getMessageAttachmentsSelectStatement(post.getId());
 
-				ResultSet rs2 = null;
 				Statement st = null;
 
 				List<Attachment> attachments = new ArrayList<Attachment>();
 
 				try {
 					st = connection.createStatement();
-					rs2 = st.executeQuery(sql);
+					ResultSet rs2 = st.executeQuery(sql);
 
 					while (rs2.next()) {
 						int id = rs2.getInt("ID");
@@ -650,12 +626,9 @@ public class PersistenceManager {
 
 						attachments.add(attachment);
 					}
+
+                    rs2.close();
 				} finally {
-					try {
-						if (rs2 != null)
-							rs2.close();
-					} catch (Exception e) {
-					}
 
 					if (st != null) {
 						try {
@@ -705,21 +678,16 @@ public class PersistenceManager {
 		
 		Connection connection = null;
 		Statement st = null;
-		ResultSet rs = null;
 
 		try {
 			connection = sakaiProxy.borrowConnection();
 			st = connection.createStatement();
 			String sql = sqlGenerator.getSelectPost(postId);
-			rs = st.executeQuery(sql);
+			ResultSet rs = st.executeQuery(sql);
 			boolean exists = rs.next();
+            rs.close();
 			return exists;
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {}
-			}
 
 			if (st != null) {
 				try {
@@ -735,13 +703,12 @@ public class PersistenceManager {
 		
 		Connection connection = null;
 		Statement st = null;
-		ResultSet rs = null;
 
 		try {
 			connection = sakaiProxy.borrowConnection();
 			st = connection.createStatement();
 			String sql = sqlGenerator.getSelectAuthorStatement(author.getUserId(), siteId);
-			rs = st.executeQuery(sql);
+			ResultSet rs = st.executeQuery(sql);
 			if (rs.next()) {
 				int totalPosts = rs.getInt("TOTAL_POSTS");
 				int totalComments = rs.getInt("TOTAL_COMMENTS");
@@ -770,11 +737,6 @@ public class PersistenceManager {
 			logger.error("Caught exception whilst populating author data. Returning false ...", e);
 			return false;
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {}
-			}
 
 			if (st != null) {
 				try {
@@ -787,15 +749,15 @@ public class PersistenceManager {
 	}
 
 	public Map<String, String> getRoles(String siteId) {
+
 		Map<String, String> tutorRoles = new HashMap<String, String>();
 
 		Connection connection = null;
 		PreparedStatement st = null;
-		ResultSet rs = null;
 		try {
 			connection = sakaiProxy.borrowConnection();
 			st = sqlGenerator.getSelectRolesStatement(siteId, connection);
-			rs = st.executeQuery();
+			ResultSet rs = st.executeQuery();
 
 			while (rs.next()) {
 				String sakaiRole = rs.getString("SAKAI_ROLE");
@@ -803,21 +765,19 @@ public class PersistenceManager {
 				tutorRoles.put(sakaiRole, llRole);
 			}
 
+            rs.close();
+
 			return tutorRoles;
 		} catch (Exception e) {
 			logger.error("Caught exception whilst getting roles. Returning null ...", e);
 			return null;
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {}
-			}
 
-			try {
-				if (st != null)
+            if (st != null) {
+			    try {
 					st.close();
-			} catch (Exception e) {}
+			    } catch (Exception e) {}
+            }
 
 			sakaiProxy.returnConnection(connection);
 		}
@@ -827,32 +787,30 @@ public class PersistenceManager {
 		
 		Connection connection = null;
 		PreparedStatement st = null;
-		ResultSet rs = null;
 
 		try {
 			connection = sakaiProxy.borrowConnection();
 			st = sqlGenerator.getSelectLLRoleStatement(siteId, sakaiRole, connection);
-			rs = st.executeQuery();
-			if (rs.next())
-				return rs.getString("LL_ROLE");
-			else {
+			ResultSet rs = st.executeQuery();
+			if (rs.next()) {
+				String llRole = rs.getString("LL_ROLE");
+                rs.close();
+				return llRole;
+            } else {
 				logger.error("No LL role for site '" + siteId + "' and sakai Role '" + sakaiRole + "'. Returning null ...");
+                rs.close();
 				return null;
 			}
 		} catch (Exception e) {
 			logger.error("Caught exception whilst getting LL role. Returning null ...", e);
 			return null;
 		} finally {
-			if (rs != null) {
-				try {
-					rs.close();
-				} catch (SQLException e) {}
-			}
 
-			try {
-				if (st != null)
+            if (st != null) {
+			    try {
 					st.close();
-			} catch (Exception e) {}
+			    } catch (Exception e) {}
+            }
 
 			sakaiProxy.returnConnection(connection);
 		}
@@ -876,8 +834,9 @@ public class PersistenceManager {
 
 				sqls = sqlGenerator.getSaveRolesStatements(siteId, map, connection);
 
-				for (PreparedStatement st : sqls)
+				for (PreparedStatement st : sqls) {
 					st.executeUpdate();
+                }
 
 				connection.commit();
 			} catch (Exception e) {
@@ -934,7 +893,7 @@ public class PersistenceManager {
 			if (statement != null) {
 				try {
 					statement.close();
-				} catch (SQLException e) {
+				} catch (Exception e) {
 				}
 			}
 
