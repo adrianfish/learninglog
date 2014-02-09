@@ -88,11 +88,4 @@ public class LearningLogRoleEntityProvider extends AbstractEntityProvider implem
 		String siteId = ref.getId();
 		return learningLogManager.getRoles(siteId);
 	}
-	
-	@EntityCustomAction(action = "currentUserRole", viewKey = EntityView.VIEW_SHOW)
-	public String handleCurrentUserRole(EntityReference ref) {
-
-		String siteId = ref.getId();
-		return learningLogManager.getCurrentUserRole(siteId);
-	}
 }

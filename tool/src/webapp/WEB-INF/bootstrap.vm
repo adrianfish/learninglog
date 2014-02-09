@@ -9,31 +9,33 @@
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery-ui.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/trimpath-template-latest.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/sakai_utils.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery.localisation.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.cluetip.min.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.min.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.pager.js"></script>
-<script type="text/javascript" src="/learninglog-tool/js/learninglog_utils.js"></script>
-<script type="text/javascript" src="/learninglog-tool/learninglog-translations.js"></script>
-<script type="text/javascript" src="/learninglog-tool/js/learninglog_permissions.js"></script>
 <script type="text/javascript" src="/profile2-tool/javascript/profile2-eb.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.MultiFile.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.form.js"></script>
-<link rel="stylesheet" type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" media="all" />
-<link href="/profile2-tool/css/profile2-profile-entity.css" type="text/css" rel="stylesheet" media="all" />
-<link rel="stylesheet" type="text/css" href="/learninglog-tool/css/learninglog.css" media="all" />
-
 <script type="text/javascript">
-    var startupArgs = {
-	    isTutor:${isTutor},
-	    blogSiteId:'${siteId}',
-        blogPlacementId:'${placementId}',
-        postId:'${postId}',
-        language:'${language}',
-        country:'${country}'
+
+    var learninglog = {
+        startupArgs: {
+            isTutor:${isTutor},
+            blogSiteId:'${siteId}',
+            blogPlacementId:'${placementId}',
+            postId:'${postId}',
+            language:'${language}',
+            country:'${country}'
+         }
     };
 </script>
+<script type="text/javascript" src="/learninglog-tool/lib/sakai_utils.js"></script>
+<script type="text/javascript" src="/learninglog-tool/js/learninglog_utils.js"></script>
+<script type="text/javascript" src="/learninglog-tool/js/learninglog_permissions.js"></script>
+<script type="text/javascript" src="/learninglog-tool/learninglog-translations-en_GB.js"></script>
+<script type="text/javascript" src="/learninglog-tool/learninglog-translations-${isolanguage}.js"></script>
+<link rel="stylesheet" type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" media="all" />
+<link rel="stylesheet" type="text/css" href="/profile2-tool/css/profile2-profile-entity.css" media="all" />
+<link rel="stylesheet" type="text/css" href="/learninglog-tool/css/learninglog.css" media="all" />
 ${sakaiHtmlHead}
 </head>
 <body>
@@ -69,7 +71,7 @@ ${sakaiHtmlHead}
 <br />
 <br />
 <input id="blog_permissions_save_button" type="button" value="${save}"/>
-<input id="blog_permissions_cancel_button" type="button" value="${cancel}"/>
+<input id="blog_permissions_cancel_button" type="button" value="${blog_cancel_label}"/>
 </form>
 -->
 </div>
@@ -104,7 +106,7 @@ ${sakaiHtmlHead}
                 {if attachment.name != 'array'}
                     <div id="file_${attachment_index}">
                         <span>${attachment.name}</span>
-                        <a href="#" onclick="LearningLogUtils.removeAttachment('${attachment.name}','${id}','file_${attachment_index}');" title="Delete attachment"><img src="/library/image/silk/cross.png" width="16" height="16"/></a>
+                        <a href="#" onclick="learninglog.utils.removeAttachment('${attachment.name}','${id}','file_${attachment_index}');" title="Delete attachment"><img src="/library/image/silk/cross.png" width="16" height="16"/></a>
                         <br />
                     </div>
                 {/if}
@@ -115,11 +117,11 @@ ${sakaiHtmlHead}
 		<br />
 		<input id="ll_attachment" name="attachment" type="file" class="multi"/><br clear="all"/>
 		<br />
-    	<input id="blog_site_id_field" name="siteId" type="hidden" value="${startupArgs.blogSiteId}"/>
+    	<input id="blog_site_id_field" name="siteId" type="hidden" value="${learninglog.startupArgs.blogSiteId}"/>
     	<input id="blog_mode_field" name="mode" type="hidden"/>
-        <input id="blog_publish_post_button" type="button" value="${publish}" title="Publishing will make this post visible to others"/>
-    	<input id="blog_save_post_button" type="button" value="Save as Draft" title="Saving as Draft will save your changes but will not make those changes visible to others"/>
-    	<input id="blog_cancel_button" type="button" value="Cancel"/>
+        <input id="blog_publish_post_button" type="button" value="${publish}" title="${blog_publish_post_tooltip}"/>
+        <input id="blog_save_post_button" type="button" value="${blog_save_as_draft_label}" title="${blog_save_as_draft_tooltip}"/>
+        <input id="blog_cancel_button" type="button" value="${blog_cancel_label}"/>
 	    <span id="learninglog_autosaved_message">${learninglog_autosaved_message_label}</span>
     </form>
 -->
@@ -138,7 +140,7 @@ ${sakaiHtmlHead}
     <input id="blog_comment_id_field" type="hidden" value="${id}"/>
     <input id="blog_publish_comment_button" type="button" value="${publish}" title="Publishing will make this comment visible to the post author"/>
     <input id="blog_save_comment_button" type="button" value="Save as Draft" title="Saving as Draft will save your changes but will not make those changes visible to the post author"/>
-    <input id="blog_cancel_button" type="button" value="${cancel}" />
+    <input id="blog_cancel_button" type="button" value="${blog_cancel_label}" />
     <span id="learninglog_autosaved_message">${learninglog_autosaved_message_label}</span>
 -->
 </div>
@@ -174,7 +176,7 @@ ${sakaiHtmlHead}
 		<tbody>
             {for m in authors}
 		<tr>
-			<td><img src="/library/image/silk/user.png" width="16" height="16" alt="User"/>&nbsp;<a href="javascript:;" onclick="switchState('userPosts',{userId:'${m.userId}'});" rel="/direct/profile/${m.userId}/formatted" class="showPostsLink">${m.userDisplayName}</a></td>
+			<td><img src="/library/image/silk/user.png" width="16" height="16" alt="User"/>&nbsp;<a href="javascript:;" onclick="learninglog.switchState('userPosts',{userId:'${m.userId}'});" rel="/direct/profile/${m.userId}/formatted" class="showPostsLink">${m.userDisplayName}</a></td>
 			<td>${m.numberOfPosts}</td>
 			<td>${m.formattedDateOfLastPost}</td>
 			<td>${m.numberOfComments}</td>
@@ -196,14 +198,14 @@ ${sakaiHtmlHead}
 	<div class="postOuterContainer">
 		<div class="postInnerContainer">
 			<span class="postOptionsPanel">
-			{if ready && (startupArgs.isTutor || creatorId == blogCurrentUser.id)}
-				<a href="#" title="${blog_comment_on_post_tooltip}" onClick="switchState('createComment',{postId: '${id}'});"><img src="/library/image/silk/comment_add.png" width="16" height="16" alt="Add Comment"/></a>&nbsp;
+			{if ready && (learninglog.startupArgs.isTutor || creatorId == learninglog.currentUser.id)}
+				<a href="#" title="${blog_comment_on_post_tooltip}" onClick="learninglog.switchState('createComment',{postId: '${id}'});"><img src="/library/image/silk/comment_add.png" width="16" height="16" alt="Add Comment"/></a>&nbsp;
             {/if}
-			{if (creatorId == blogCurrentUser.id && !ready) || (ready && startupArgs.isTutor)}
-				<a href="#" title="${blog_delete_post_tooltip}" onclick="return LearningLogUtils.recyclePost('${id}');"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete"/></a>&nbsp;
+			{if (creatorId == learninglog.currentUser.id && !ready) || (ready && learninglog.startupArgs.isTutor)}
+				<a href="#" title="${blog_delete_post_tooltip}" onclick="return learninglog.utils.recyclePost('${id}');"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete"/></a>&nbsp;
 			{/if}
-			{if !ready && creatorId === blogCurrentUser.id}
-				<a href="#" onClick="switchState('createPost',{postId:'${id}'});" title="${blog_edit_post_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit"/></a>&nbsp;
+			{if !ready && creatorId === learninglog.currentUser.id}
+				<a href="#" onClick="learninglog.switchState('createPost',{postId:'${id}'});" title="${blog_edit_post_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit"/></a>&nbsp;
 			{/if}
         </span>
         {if private}
@@ -235,7 +237,7 @@ ${sakaiHtmlHead}
 			<br/>
 			<div class="title">
 				<span>
-					<a href="#" onclick="switchState('post',{'postId':'${id}'});" title="${blog_view_post_tooltip}"><span>${title}</span></a>
+					<a href="#" onclick="learninglog.switchState('post',{'postId':'${id}'});" title="${blog_view_post_tooltip}"><span>${title}</span></a>
 				</span>
 			</div>
 
@@ -260,11 +262,11 @@ ${sakaiHtmlHead}
                             {/if}
 						</div>
 						<div class="blog_comment_content">${comment.content}</div>
-						{if startupArgs.isTutor || comment.creatorId === blogCurrentUser.id}
-							<a href="#" onclick="return LearningLogUtils.deleteComment('${comment.id}');" title="${blog_delete_comment_tooltip}"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete Comment"/></a>&nbsp;
+						{if learninglog.startupArgs.isTutor || comment.creatorId === learninglog.currentUser.id}
+							<a href="#" onclick="return learninglog.utils.deleteComment('${comment.id}');" title="${blog_delete_comment_tooltip}"><img src="/library/image/silk/cross.png" width="16" height="16" alt="Delete Comment"/></a>&nbsp;
 						{/if}
-						{if comment.creatorId === blogCurrentUser.id}
-							<a href="#" onClick="switchState('createComment',{postId:'${id}',commentId:'${comment.id}'});" title="${blog_edit_comment_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit Comment"/></a>
+						{if comment.creatorId === learninglog.currentUser.id}
+							<a href="#" onClick="learninglog.switchState('createComment',{postId:'${id}',commentId:'${comment.id}'});" title="${blog_edit_comment_tooltip}"><img src="/library/image/silk/pencil.png" width="16" height="16" alt="Edit Comment"/></a>
 						{/if}
                     </div>
 					{/for}
@@ -280,9 +282,9 @@ ${sakaiHtmlHead}
 	<div id="noPostsLabel"><span>${noPosts}</span></div>
 	{else}
 	<div style="clear: left; margin-top: 10px;" id="viewOptions">
-   		<input type="checkbox" onclick="toggleFullContent(this);"/>
+   		<input type="checkbox" onclick="learninglog.toggleFullContent(this);"/>
 		<span>${blog_show_title_only_label}</span>
-   		<input type="checkbox" onclick="toggleComments(this);"/>
+   		<input type="checkbox" onclick="learninglog.toggleComments(this);"/>
 		<span>${blog_show_all_comments_label}</span>
    	</div>
 	{/if}
@@ -310,8 +312,10 @@ ${sakaiHtmlHead}
 	<div id="noPostsLabel"><span>${noPosts}</span></div>
     <div id="postsWrapper">
     
-    	<input type="button" id="blog_really_delete_button" value="${del}"/>
-    	<input type="button" id="blog_restore_button" value="${restore}"/>
+        {if posts.length > 0}
+    	<input type="button" id="blog_really_delete_button" value="${blog_delete_label}"/>
+        <input type="button" id="blog_restore_button" value="${blog_restore_label}"/>
+        {/if}
   	    
   	 	<div id="posts">
   	    <table class="tableHeader">
@@ -349,25 +353,6 @@ ${sakaiHtmlHead}
 			</table>
 		</div>
 	</div>
--->
-</div>
-
-<div id="blog_preferences_template" style="display:none"><!--
-<h2>${blog_preferences_label}</h2>
-<fieldset id="blog_email_preferences_fieldset">
-<legend>${blog_email_alerts_label}</legend>
-<input id="blog_email_option_never_checkbox" class="blog_email_option" type="radio" name="emailPreference" value="never"/>${blog_email_never_label}
-<br />
-<input id="blog_email_option_each_checkbox" class="blog_email_option" type="radio" name="emailPreference" value="each"/>${blog_email_each_label}
-<br />
-<input id="blog_email_option_digest_checkbox" class="blog_email_option" type="radio" name="emailPreference" value="digest"/>${blog_email_digest_label}
-<br />
-</fieldset>
-<br />
-
-<input id="blog_preferences_save_button" type="button" value="${save}"/>
-<input type="button" value="${cancel}" onclick="return switchState('home');"/>
-</form>
 -->
 </div>
 

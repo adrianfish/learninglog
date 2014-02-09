@@ -1,261 +1,189 @@
-var blogCurrentUserPermissions = null;
-var blogCurrentUserRole = null;
-var blogCurrentPost = null;
-var blogCurrentPosts = null;
-var blogCurrentUser = null;
-var blogHomeState = null;
-
-var llAttachmentsDirty = false;
-
-var autosave_id = null;
-
-(function() {
-
-    var llIsTutor = startupArgs.isTutor;
-
-	// We need the toolbar in a template so we can swap in the translations
-	SakaiUtils.renderTrimpathTemplate('blog_toolbar_template',{},'blog_toolbar');
-
-	$('#blog_home_link > span > a').click(function(e) {
-		return switchState('home');
-	});
-
-	$('#blog_create_post_link > span > a').click(function(e) {
-		return switchState('createPost');
-	});
-
-	$('#blog_permissions_link > span > a').click(function(e) {
-		return switchState('permissions');
-	});
-
-	$('#blog_recycle_bin_link > span > a').click(function(e) {
-		return switchState('viewRecycled');
-	});
-
-	if(!llIsTutor) {
-		$("#blog_create_post_link").show();
-    } else {
-		$("#blog_create_post_link").hide();
-    }
-
-	blogCurrentUser = SakaiUtils.getCurrentUser();
-	
-	if(!blogCurrentUser) {
-		alert("No current user. Have you logged in?");
-		return;
-	}
-	
-    $.localise('learninglog-translations',{language:startupArgs.language,loadBase: true});
-	
-	blogCurrentUserPermissions = new LearningLogPermissions(LearningLogUtils.getCurrentUserPermissions());
-
-	if(llIsTutor) {
-		blogHomeState = 'viewMembers';
-	} else {
-		blogHomeState = 'userPosts';
-	}
-
-    var initialState = blogHomeState;
-
-    if(startupArgs.postId != 'none') {
-        initialState = 'post';
-    }
-	
-	if(blogCurrentUserPermissions.modifyPermissions) {
-		$("#blog_permissions_link").show();
-		$("#blog_recycle_bin_link").show();
-	}
-	else {
-		$("#blog_permissions_link").hide();
-		$("#blog_recycle_bin_link").hide();
-	}
-
-	try {
-		if(window.frameElement) {
-			window.frameElement.style.minHeight = '600px';
-		}
-	} catch(err) {
-		// This is likely under an LTI provision scenario
-	}
-
-	// Clear the autosave interval
-	if(autosave_id) {
-		clearInterval(autosave_id);
-	}
-	
-	// Now switch into the requested state
-	switchState(initialState,startupArgs);
-})();
-
-function switchState(state,args) {
+learninglog.switchState = function (state, args) {
 
 	$('#cluetip').hide();
 
 	$('#blog_toolbar > li > span').removeClass('current');
 	
-	if('home' === state) {
-
+	if ('home' === state) {
 	    $('#blog_home_link > span').addClass('current');
-		switchState(blogHomeState,args);
-	} else if('viewMembers' === state) {
-
+		this.switchState(this.homeState, args);
+	} else if ('viewMembers' === state) {
 	    $('#blog_home_link > span').addClass('current');
 
-		jQuery.ajax({
-	    	url : "/direct/learninglog-author.json?siteId=" + startupArgs.blogSiteId,
+		$.ajax({
+	    	url : "/direct/learninglog-author.json?siteId=" + this.startupArgs.blogSiteId,
 	      	dataType : "json",
 			cache: false,
-		   	success : function(data) {
+		   	success : function (data) {
+
 				var authors = data['learninglog-author_collection'];
-				for(var i=0,j=authors.length;i<j;i++) {
-					if(authors[i].dateOfLastPost > 0) {
-						authors[i].formattedDateOfLastPost = LearningLogUtils.formatDate(authors[i].dateOfLastPost);
+				for (var i=0,j=authors.length;i<j;i++) {
+					if (authors[i].dateOfLastPost > 0) {
+						authors[i].formattedDateOfLastPost = learninglog.utils.formatDate(authors[i].dateOfLastPost);
 					} else {
 						authors[i].formattedDateOfLastPost = "n/a";
                     }
-					if(authors[i].dateOfLastComment > 0) {
-						authors[i].formattedDateOfLastComment = LearningLogUtils.formatDate(authors[i].dateOfLastComment);
+					if (authors[i].dateOfLastComment > 0) {
+						authors[i].formattedDateOfLastComment = learninglog.utils.formatDate(authors[i].dateOfLastComment);
 					} else {
 						authors[i].formattedDateOfLastComment = "n/a";
                     }
 				}
-				SakaiUtils.renderTrimpathTemplate('blog_authors_content_template',{'authors':authors},'blog_content');
+				learninglog.utils.renderTrimpathTemplate('blog_authors_content_template', {'authors': authors}, 'blog_content');
 
- 				$(document).ready(function() {
- 					LearningLogUtils.attachProfilePopup();
-  									
+ 				$(document).ready(function () {
+
+ 					learninglog.utils.attachProfilePopup();
+
+                    $.tablesorter.addParser({
+                        id: 'learninglogDate',
+                        is: function (s) {
+                            return false;
+                        },
+                        format: function (s) {
+
+                            if(s === 'n/a - ') {
+                                return 0;
+                            }
+
+                            var matches = s.match(/^([\d]{1,2}) (\w+) ([\d]{4}) \@ ([\d]{2}):([\d]{2}).*$/);
+                            var d = new Date(matches[3], blog_month_mappings[matches[2]], matches[1], matches[4], matches[5]);
+                            return d.getTime();
+                        },
+                        type: 'numeric'
+                    });
+
   					$("#blog_author_table").tablesorter({
-	 						cssHeader:'blogSortableTableHeader',
-	 						cssAsc:'blogSortableTableHeaderSortUp',
-	 						cssDesc:'blogSortableTableHeaderSortDown',
+	 						cssHeader: 'blogSortableTableHeader',
+	 						cssAsc: 'blogSortableTableHeaderSortUp',
+	 						cssDesc: 'blogSortableTableHeaderSortDown',
 							textExtraction: 'complex',	
 							sortList: [[0,0]],
 	 						widgets: ['zebra'],
 	 						headers:
 	 						{
-	 							2: {sorter: "isoDate"},
-	 							4: {sorter: "isoDate"}
+	 							2: {sorter: 'learninglogDate'},
+	 							4: {sorter: 'learninglogDate'}
 	 						}
-                        }).tablesorterPager({container: $("#blogBloggerPager"),positionFixed: false});
+                        }).tablesorterPager({container: $("#blogBloggerPager"), positionFixed: false});
 	 						
-                    resizeMainFrame();
+                    learninglog.resizeMainFrame();
 	   			});
 			},
-			error : function(xmlHttpRequest,status,errorThrown) {
+			error : function (xmlHttpRequest, status, errorThrown) {
 				alert("Failed to get authors. Reason: " + errorThrown);
 			}
 	   	});
-	} else if('userPosts' === state) {
-
+	} else if ('userPosts' === state) {
 	    $('#blog_home_link > span').addClass('current');
 
 		// Default to using the current session user id ...
-		var userId = blogCurrentUser.id;
+		var userId = this.currentUser.id;
 		
 		// ... but override it with any supplied one
 		if(args && args.userId) {
 			userId = args.userId;
         }
 
-		var url = "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId + "&creatorId=" + userId;
+		var url = "/direct/learninglog-post.json?siteId=" + this.startupArgs.blogSiteId + "&creatorId=" + userId;
 
-		jQuery.ajax( {
+		$.ajax( {
 	       	'url' : url,
 	       	dataType : "text",
 			cache: false,
-		   	success : function(text) {
+		   	success : function (text) {
 		   	
 		   		var data = JSON.parse(text);
 
-				var profileMarkup = SakaiUtils.getProfileMarkup(userId);
+				var profileMarkup = learninglog.sakai.getProfileMarkup(userId);
 
-				blogCurrentPosts = data['learninglog-post_collection'];
-                LearningLogUtils.addFormattedDatesToCurrentPosts();
+				learninglog.currentPosts = data['learninglog-post_collection'];
+                learninglog.utils.addFormattedDatesToCurrentPosts();
 	 			
-				SakaiUtils.renderTrimpathTemplate('blog_user_posts_template',{'creatorId':userId,'posts':blogCurrentPosts},'blog_content');
+				learninglog.utils.renderTrimpathTemplate('blog_user_posts_template', {'creatorId': userId,'posts': learninglog.currentPosts}, 'blog_content');
 				$('#blog_author_profile').html(profileMarkup);
-	 			for(var i=0,j=blogCurrentPosts.length;i<j;i++) {
-                    
-                    LearningLogUtils.addEscapedCreatorIdsToComments(blogCurrentPosts[i]);
-					SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPosts[i],'post_' + blogCurrentPosts[i].id);
+	 			for (var i=0,j=learninglog.currentPosts.length;i<j;i++) {
+                    learninglog.utils.addEscapedCreatorIdsToComments(learninglog.currentPosts[i]);
+					learninglog.utils.renderTrimpathTemplate('blog_post_template', learninglog.currentPosts[i], 'post_' + learninglog.currentPosts[i].id);
                 }
 
-                $(document).ready(function() {
+                $(document).ready(function () {
 
                     $('.ll_toggle_comments_link').click(function (e) {
 
-                        var postId = this.id.substring(0,this.id.indexOf('_comments_toggle'));
+                        var postId = this.id.substring(0, this.id.indexOf('_comments_toggle'));
                         $('#' + postId + '_comments').toggle();
-                        resizeMainFrame();
+                        learninglog.resizeMainFrame();
                     });
 
-                    resizeMainFrame();
+                    learninglog.resizeMainFrame();
                 });
             },
-			error : function(xmlHttpRequest,status,errorThrown) {
+			error : function (xmlHttpRequest, status, errorThrown) {
 				alert("Failed to get posts. Reason: " + errorThrown);
 			}
 	   	});
-	} else if('post' === state) {
-
-		if(args && args.postId) {
-			blogCurrentPost = LearningLogUtils.findPost(args.postId);
+	} else if ('post' === state) {
+		if (args && args.postId) {
+			this.currentPost = learninglog.utils.findPost(args.postId);
         }
 
-		if(!blogCurrentPost) {
+		if (!this.currentPost) {
 			return false;
         }
 			
-		LearningLogUtils.addFormattedDatesToCurrentPost();
-        LearningLogUtils.addEscapedCreatorIdsToComments(blogCurrentPost);
+		this.utils.addFormattedDatesToCurrentPost();
+        this.utils.addEscapedCreatorIdsToComments(this.currentPost);
 
-		SakaiUtils.renderTrimpathTemplate('blog_post_page_content_template',blogCurrentPost,'blog_content');
-		SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPost,'post_' + blogCurrentPost.id);
+		this.utils.renderTrimpathTemplate('blog_post_page_content_template', this.currentPost, 'blog_content');
+		this.utils.renderTrimpathTemplate('blog_post_template', this.currentPost, 'post_' + this.currentPost.id);
 
-	 	$(document).ready(function() {
-			$('#blog_user_posts_link').click(function(e) {
-				switchState('userPosts',{'userId' : blogCurrentPost.creatorId});
+	 	$(document).ready(function () {
+
+			$('#blog_user_posts_link').click(function (e) {
+				learninglog.switchState('userPosts', {'userId': learninglog.currentPost.creatorId});
 			});
 
 			$('.content').show();
 
-			if(blogCurrentPost.comments.length > 0) $('.comments').show();
+			if (learninglog.currentPost.comments.length > 0) {
+                $('.comments').show();
+            }
 
-            resizeMainFrame();
+            learninglog.resizeMainFrame();
 	 	});
-	} else if('createPost' === state) {
-
+	} else if ('createPost' === state) {
 	    $('#blog_create_post_link > span').addClass('current');
 
-		var post = {id:'',title:'',content:'',commentable:true,attachments:[]};
+		var post = {id: '', title: '', content: '', commentable: true, attachments: []};
 
-		if(args && args.postId) {
-			post = LearningLogUtils.findPost(args.postId);
+		if (args && args.postId) {
+			post = learninglog.utils.findPost(args.postId);
         }
 
-		SakaiUtils.renderTrimpathTemplate('blog_create_post_template',post,'blog_content');
+		this.utils.renderTrimpathTemplate('blog_create_post_template', post, 'blog_content');
 
-	 	$(document).ready(function() {
+	 	$(document).ready(function () {
 
-            if(post.attachments) {
+            if (post.attachments) {
                 $('#attachments-area').show();
             }
 	 	
-			$('#blog_save_post_button').click(function (e) { LearningLogUtils.savePostAsDraft(false); });
+			$('#blog_save_post_button').click(function (e) { learninglog.utils.savePostAsDraft(false); });
 
-			$('#blog_publish_post_button').click(LearningLogUtils.publishPost);
+			$('#blog_publish_post_button').click(function (e) { learninglog.utils.publishPost(); });
 
 			$('#blog_cancel_button').click(function(e) {
-				switchState('home');
+				learninglog.switchState('home');
 			});
 			
- 			SakaiUtils.setupWysiwygEditor('blog_content_editor',600,400,'Default',startupArgs.blogSiteId);
+ 			learninglog.sakai.setupWysiwygEditor('blog_content_editor', 600, 400);
  			
 	    	$('#ll_attachment').MultiFile( {
 		       		max: 5,
 					namePattern: '$name_$i',
-                    afterFileAppend: function(element, value, master_element) {
-                        llAttachmentsDirty = true;
+                    afterFileAppend: function (element, value, master_element) {
+                        learninglog.attachmentsDirty = true;
                     }
 				} );
 				
@@ -263,45 +191,45 @@ function switchState(state,args) {
 				dataType: 'text',
 				timeout: 30000,
 				iframe: true,
-   				success: function(text,statusText,xhr) {
+   				success: function (text, statusText, xhr) {
    				
    					var post = JSON.parse(unescape(text));
    					
-   					if(!post.isAutosave) {
-						switchState(blogHomeState);
+   					if (!post.isAutosave) {
+						learninglog.switchState(learninglog.homeState);
                     } else {
    						// Get rid of the populated upload fields or they may result
    						// in multiple copies of the same attachment, especially in
    						// the autosave scenario
                     	var mfs = $('.MultiFile-applied');
-                    	for(var i=0,j=mfs.length - 1;i<j;i++) {
+                    	for (var i=0,j=mfs.length - 1;i<j;i++) {
                         	$(mfs[i]).remove();
                     	}
                         $('.MultiFile-label').remove();
 						$('#blog_post_id_field').val(post.id);
-                        if(post.attachments.length > 0) {
+                        if (post.attachments.length > 0) {
                             // Now add the current attachments
                             var attachments = $('#attachments-area').show();
-                            for(var i=0,j=post.attachments.length;i<j;i++) {
+                            for (var i=0,j=post.attachments.length;i<j;i++) {
                                 var attachment = post.attachments[i];
-                                attachments.append("<div id=\"file_" + i +"\"><span>" + attachment.name + "</span><a href=\"#\" onclick=\"LearningLogUtils.removeAttachment('" + attachment.id + "','" + post.id + "','file_" + i +"');\" title=\"Delete attachment\"><img src=\"/library/image/silk/cross.png\" width=\"16\" height=\"16\"/></a><br /></div>");
+                                attachments.append("<div id=\"file_" + i +"\"><span>" + attachment.name + "</span><a href=\"#\" onclick=\"learninglog.utils.removeAttachment('" + attachment.id + "','" + post.id + "','file_" + i +"');\" title=\"Delete attachment\"><img src=\"/library/image/silk/cross.png\" width=\"16\" height=\"16\"/></a><br /></div>");
                             }
                         }
 
 						// Flash the autosaved message
 						$('#learninglog_autosaved_message').show();
-						setTimeout(function() {
+						setTimeout(function () {
 								$('#learninglog_autosaved_message').fadeOut(200);
 							},2000);
 
-                        SakaiUtils.resetEditor('blog_content_editor');
-                        llAttachmentsDirty = false;
+                        learninglog.sakai.resetEditor('blog_content_editor');
+                        learninglog.attachmentsDirty = false;
 					}
    				},
-   				beforeSubmit: function(arr, $form, options) {
+   				beforeSubmit: function (arr, $form, options) {
    					return true;
    				},
-   				error : function(xmlHttpRequest,textStatus,errorThrown) {
+   				error : function (xmlHttpRequest, textStatus, errorThrown) {
    					alert('Error:' + errorThrown);
 				}
    			};
@@ -309,154 +237,227 @@ function switchState(state,args) {
    			$('#ll_post_form').ajaxForm(savePostOptions);
 
 			// Start the auto saver
-			autosave_id = setInterval(function() {
-					if(!(SakaiUtils.isEditorDirty('blog_content_editor') || llAttachmentsDirty) || $('#blog_title_field').val().length < 4) {
+			learninglog.autosaveId = setInterval(function () {
+
+					if (!(learninglog.sakai.isEditorDirty('blog_content_editor') || learninglog.attachmentsDirty) || $('#blog_title_field').val().length < 4) {
 						return;
 					}
 					
-					LearningLogUtils.savePostAsDraft(true);
+					learninglog.utils.savePostAsDraft(true);
 				},10000);
 	 	});
-	} else if('createComment' === state) {
-	
-		if(!args || !args.postId) {
+	} else if ('createComment' === state) {
+		if (!args || !args.postId) {
 			return;
         }
 
-		blogCurrentPost = LearningLogUtils.findPost(args.postId);
+		this.currentPost = learninglog.utils.findPost(args.postId);
 
-		LearningLogUtils.addFormattedDatesToCurrentPost();
+		learninglog.utils.addFormattedDatesToCurrentPost();
 
-		var comment = {id: '',postId: args.postId,content: ''};
+		var comment = {id: '', postId: args.postId, content: ''};
 
-		if(args.commentId) {
-			var comments = blogCurrentPost.comments;
+		if (args.commentId) {
+			var comments = learninglog.currentPost.comments;
 
-			for(var i=0,j=comments.length;i<j;i++) {
-				if(comments[i].id == args.commentId) {
+			for (var i=0,j=comments.length;i<j;i++) {
+				if (comments[i].id === args.commentId) {
 					comment = comments[i];
 					break;
 				}
 			}
 
-			if(comment.autosavedVersion) {
-				if(confirm('There is an autosaved version of this comment. Do you want to use that instead?')) {
+			if (comment.autosavedVersion) {
+				if (confirm('There is an autosaved version of this comment. Do you want to use that instead?')) {
 					comment = comment.autosavedVersion;
 				}
 			}
 		}
 
-		SakaiUtils.renderTrimpathTemplate('blog_create_comment_template',comment,'blog_content');
+		this.utils.renderTrimpathTemplate('blog_create_comment_template', comment, 'blog_content');
 
-		$(document).ready(function() {
+		$(document).ready(function () {
 
-			SakaiUtils.renderTrimpathTemplate('blog_post_template',blogCurrentPost,'blog_post_' + args.postId);
+			learninglog.utils.renderTrimpathTemplate('blog_post_template', learninglog.currentPost, 'blog_post_' + args.postId);
 
-			$('#blog_save_comment_button').click(LearningLogUtils.saveCommentAsDraft);
+			$('#blog_save_comment_button').click(function (e) { learninglog.utils.saveCommentAsDraft(); });
 
-			$('#blog_publish_comment_button').click(LearningLogUtils.publishComment);
+			$('#blog_publish_comment_button').click(function (e) { learninglog.utils.publishComment(); });
 
 			$('#blog_cancel_button').click(function (e) {
-                switchState('userPosts',{'userId':blogCurrentPost.creatorId});
+                learninglog.switchState('userPosts', {'userId': learninglog.currentPost.creatorId});
             });
 			
- 			SakaiUtils.setupWysiwygEditor('blog_content_editor',600,400);
+ 			learninglog.sakai.setupWysiwygEditor('blog_content_editor', 600, 400);
 
 			// Start the auto saver
-			autosave_id = setInterval(function() {
-					if(!SakaiUtils.isEditorDirty('blog_content_editor')) {
+			learninglog.autosaveId = setInterval(function() {
+					if(!learninglog.sakai.isEditorDirty('blog_content_editor')) {
 						return;
 					}
 					
-					LearningLogUtils.autosaveComment();
+					learninglog.utils.autosaveComment();
 				},10000);
 		});
-	} else if('permissions' === state) {
-
+	} else if ('permissions' === state) {
 	    $('#blog_permissions_link > span').addClass('current');
 
-		var roleMapList = LearningLogUtils.parsePermissions();
+		var roleMapList = learninglog.utils.parsePermissions();
 
-		SakaiUtils.renderTrimpathTemplate('blog_permissions_content_template',{'roleMapList':roleMapList},'blog_content');
+		this.utils.renderTrimpathTemplate('blog_permissions_content_template', {'roleMapList': roleMapList}, 'blog_content');
 
-	 	$(document).ready(function() {
-			$('#blog_permissions_save_button').click(LearningLogUtils.savePermissions);
-			$('#blog_permissions_cancel_button').click(function(e) {
-				return switchState('home');
+	 	$(document).ready(function () {
+
+			$('#blog_permissions_save_button').click(learninglog.utils.savePermissions);
+			$('#blog_permissions_cancel_button').click(function (e) {
+				return learninglog.switchState('home');
 			});
 
-            resizeMainFrame();
+            learninglog.resizeMainFrame();
 		});
-	} else if('viewRecycled' === state) {
-
+	} else if ('viewRecycled' === state) {
 	    $('#blog_recycle_bin_link > span').addClass('current');
 
-		jQuery.ajax( {
-	       	url : "/direct/learninglog-post.json?siteId=" + startupArgs.blogSiteId + "&visibilities=RECYCLED",
+		$.ajax( {
+	       	url : "/direct/learninglog-post.json?siteId=" + this.startupArgs.blogSiteId + "&visibilities=RECYCLED",
 	       	dataType : "json",
 			cache: false,
-		   	success : function(data) {
+		   	success : function (data) {
 
 				var posts = data['learninglog-post_collection'];
 	 			
-				SakaiUtils.renderTrimpathTemplate('blog_recycled_posts_template',{'posts':posts},'blog_content');
-	 			for(var i=0,j=posts.length;i<j;i++) {
-                    LearningLogUtils.addFormattedDatesToPost(posts[i]);
-                    LearningLogUtils.addEscapedCreatorIdsToComments(posts[i]);
-					SakaiUtils.renderTrimpathTemplate('blog_post_template',posts[i],'post_' + posts[i].id);
+				learninglog.utils.renderTrimpathTemplate('blog_recycled_posts_template', {'posts': posts}, 'blog_content');
+	 			for (var i=0,j=posts.length;i<j;i++) {
+                    learninglog.utils.addFormattedDatesToPost(posts[i]);
+                    learninglog.utils.addEscapedCreatorIdsToComments(posts[i]);
+					learninglog.utils.renderTrimpathTemplate('blog_post_template', posts[i], 'post_' + posts[i].id);
                 }
 
-				$('#blog_really_delete_button').click(LearningLogUtils.deleteSelectedPosts);
-				$('#blog_restore_button').click(LearningLogUtils.restoreSelectedPosts);
+				$('#blog_really_delete_button').click(learninglog.utils.deleteSelectedPosts);
+				$('#blog_restore_button').click(learninglog.utils.restoreSelectedPosts);
 
-                $(document).ready(function() {
-                    resizeMainFrame();
+                $(document).ready(function () {
+                    learninglog.resizeMainFrame();
                 });
 			},
-			error : function(xmlHttpRequest,status,errorThrown) {
+			error : function (xmlHttpRequest, status, errorThrown) {
 				alert("Failed to get posts. Reason: " + errorThrown);
 			}
 	   	});
 	}
-}
+};
 
-function toggleFullContent(v) {
-    $(document).ready(function() {
-        resizeMainFrame();
+learninglog.toggleFullContent = function (v) {
+
+    $(document).ready(function () {
+        learninglog.resizeMainFrame();
     });
 	
-	if(v.checked) {
-
+	if (v.checked) {
 		$('.content').hide();
 		$('.comments').hide();
 		$('.comment_toggle').hide();
 	} else {
-
 		$('.content').show();
 		$('.comments').show();
 		$('.comment_toggle').show();
 	}
-}
+};
 
-function toggleComments(v) {
-    $(document).ready(function() {
-        resizeMainFrame();
+learninglog.toggleComments = function (v) {
+
+    $(document).ready(function () {
+        learninglog.resizeMainFrame();
     });
 	
-	if(v.checked) {
+	if (v.checked) {
 		$('.comments').show();
 	} else {
 		$('.comments').hide();
 	}
-}
+};
 
-function resizeMainFrame() {
+learninglog.resizeMainFrame = function () {
 
     try {
-        if(window.frameElement) {
+        if (window.frameElement) {
             setMainFrameHeight(window.frameElement.id);
         }
-    } catch(err) {
+    } catch (err) {
         // This is likely under an LTI provision scenario
     }
-}
+};
+
+(function () {
+
+	// We need the toolbar in a template so we can swap in the translations
+	learninglog.utils.renderTrimpathTemplate('blog_toolbar_template', {}, 'blog_toolbar');
+
+	$('#blog_home_link > span > a').click(function (e) {
+		return learninglog.switchState('home');
+	});
+
+	$('#blog_create_post_link > span > a').click(function (e) {
+		return learninglog.switchState('createPost');
+	});
+
+	$('#blog_permissions_link > span > a').click(function (e) {
+		return learninglog.switchState('permissions');
+	});
+
+	$('#blog_recycle_bin_link > span > a').click(function (e) {
+		return learninglog.switchState('viewRecycled');
+	});
+
+	if (!learninglog.startupArgs.isTutor) {
+		$("#blog_create_post_link").show();
+    } else {
+		$("#blog_create_post_link").hide();
+    }
+
+	learninglog.currentUser = learninglog.sakai.getCurrentUser();
+	
+	if (!learninglog.currentUser) {
+		alert("No current user. Have you logged in?");
+		return;
+	}
+	
+	if (learninglog.startupArgs.isTutor) {
+		learninglog.homeState = 'viewMembers';
+	} else {
+		learninglog.homeState = 'userPosts';
+	}
+
+    var initialState = learninglog.homeState;
+
+    if(learninglog.startupArgs.postId !== 'none') {
+        initialState = 'post';
+    }
+
+	var currentUserPermissions = new LearningLogPermissions(learninglog.utils.getCurrentUserPermissions());
+	
+	if (currentUserPermissions.modifyPermissions) {
+		$("#blog_permissions_link").show();
+		$("#blog_recycle_bin_link").show();
+	} else {
+		$("#blog_permissions_link").hide();
+		$("#blog_recycle_bin_link").hide();
+	}
+
+	try {
+		if (window.frameElement) {
+			window.frameElement.style.minHeight = '600px';
+		}
+	} catch (err) {
+		// This is likely under an LTI provision scenario
+	}
+
+	// Clear the autosave interval
+	if (learninglog.autosaveId) {
+		clearInterval(learninglog.autosaveId);
+	}
+
+	
+	// Now switch into the requested state
+	learninglog.switchState(initialState, learninglog.startupArgs);
+})();
