@@ -13,7 +13,7 @@
   	<parent>
     	<artifactId>learninglog-base</artifactId>
     	<groupId>org.sakaiproject.learninglog</groupId>
-    	<version>2.10-SNAPSHOT</version>
+    	<version>11-SNAPSHOT</version>
   	</parent>
   	
   	<packaging>sakai-component</packaging>

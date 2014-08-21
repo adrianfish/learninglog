@@ -44,6 +44,10 @@ learninglog.utils.addFormattedDatesToCurrentPost = function () {
 
 learninglog.utils.formatDate = function (longDate) {
 
+    if (longDate <= 0) {
+        return none;
+    }
+
     var d = new Date(longDate);
     var hours = d.getHours();
     if (hours < 10) hours = '0' + hours;

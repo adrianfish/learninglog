@@ -53,3 +53,4 @@ blog_month_mappings = {'Jan': 1,'Feb': 2,'Mar': 3,'Apr': 4,'May': 5,'Jun': 6,'Ju
 number_of_comments_prefix="This post has ";
 number_of_comments_suffix="comment(s).";
 show_hide_comments="Show/Hide them";
+none="-";

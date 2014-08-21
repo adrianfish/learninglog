@@ -18,22 +18,16 @@ learninglog.switchState = function (state, args) {
 
 				var authors = data['learninglog-author_collection'];
 				for (var i=0,j=authors.length;i<j;i++) {
-					if (authors[i].dateOfLastPost > 0) {
-						authors[i].formattedDateOfLastPost = learninglog.utils.formatDate(authors[i].dateOfLastPost);
-					} else {
-						authors[i].formattedDateOfLastPost = "n/a";
-                    }
-					if (authors[i].dateOfLastComment > 0) {
-						authors[i].formattedDateOfLastComment = learninglog.utils.formatDate(authors[i].dateOfLastComment);
-					} else {
-						authors[i].formattedDateOfLastComment = "n/a";
-                    }
+                    authors[i].formattedDateOfLastPost = learninglog.utils.formatDate(authors[i].dateOfLastPost);
+                    authors[i].formattedDateOfLastComment = learninglog.utils.formatDate(authors[i].dateOfLastComment);
 				}
 				learninglog.utils.renderTrimpathTemplate('blog_authors_content_template', {'authors': authors}, 'blog_content');
 
  				$(document).ready(function () {
 
  					learninglog.utils.attachProfilePopup();
+
+                    console.log('sdfsdf');
 
                     $.tablesorter.addParser({
                         id: 'learninglogDate',
@@ -42,7 +36,7 @@ learninglog.switchState = function (state, args) {
                         },
                         format: function (s) {
 
-                            if(s === 'n/a - ') {
+                            if (s.indexOf(none) === 0) {
                                 return 0;
                             }
 
