@@ -12,7 +12,7 @@
   	<parent>
     	<artifactId>learninglog-base</artifactId>
     	<groupId>org.sakaiproject.learninglog</groupId>
-    	<version>11-SNAPSHOT</version>
+    	<version>10-SNAPSHOT</version>
   	</parent>
   	
   	<packaging>jar</packaging>
@@ -22,21 +22,10 @@
   	</properties>
 
   	<dependencies>
-    	<!--dependency>
-      		<groupId>org.sakaiproject.profile</groupId>
-      		<artifactId>profile-api</artifactId>
-    	</dependency-->
 		<dependency>
        		<groupId>org.sakaiproject.kernel</groupId>
            	<artifactId>sakai-kernel-api</artifactId>
         </dependency>
-
-        <!--dependency>
-        	<groupId>org.sakaiproject.kernel</groupId>
-          	<artifactId>sakai-component-manager</artifactId>
-	  		<scope>provided</scope>
-      	</dependency-->
-
         <dependency>
         	<groupId>org.sakaiproject.kernel</groupId>
            	<artifactId>sakai-kernel-util</artifactId>

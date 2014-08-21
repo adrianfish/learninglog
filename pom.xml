@@ -8,14 +8,14 @@
     <parent>
         <groupId>org.sakaiproject</groupId>
         <artifactId>master</artifactId>
-        <version>11-SNAPSHOT</version>
+        <version>10-SNAPSHOT</version>
         <relativePath>../master/pom.xml</relativePath>
     </parent>
   
   	<name>LEARNINGLOG BASE</name>
   	<groupId>org.sakaiproject.learninglog</groupId>
   	<artifactId>learninglog-base</artifactId>
-  	<version>11-SNAPSHOT</version>
+  	<version>10-SNAPSHOT</version>
   	<packaging>pom</packaging>
 
 	<properties>
