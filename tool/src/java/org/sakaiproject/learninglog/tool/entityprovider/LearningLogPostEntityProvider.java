@@ -154,8 +154,8 @@ public final class LearningLogPostEntityProvider extends AbstractEntityProvider 
 			if((isNew || isPublishing) && post.isReady()) {
 
                 // This is for sitestats purposes.
-				final String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/post/" + post.getId();
-				sakaiProxy.postEvent(Constants.BLOG_POST_CREATED_SS,reference,post.getSiteId());
+				//final String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/post/" + post.getId();
+				sakaiProxy.postEvent(Constants.BLOG_POST_CREATED_SS, post.getReference(), post.getSiteId());
 				
 				// Send an email to all site participants apart from the author
 				learningLogManager.sendNewPostAlert(post);

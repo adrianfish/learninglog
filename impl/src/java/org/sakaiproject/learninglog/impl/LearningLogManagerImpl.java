@@ -186,7 +186,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
 	public void sendNewPostAlert(Post post) {
 
         try {
-            sakaiProxy.postEvent(Constants.BLOG_POST_CREATED, post.getReference());
+            sakaiProxy.postEvent(Constants.BLOG_POST_CREATED, post.getReference(), post.getSiteId());
         } catch(Exception e) {
             logger.error("Failed to post post created event",e);
         }
@@ -250,6 +250,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
     public Entity getEntity(Reference reference) {
 
         String referenceString = reference.getReference();
+
         String[] parts = referenceString.split(Entity.SEPARATOR);
 
         if (!parts[1].equals(Constants.ENTITY_PREFIX)) {
@@ -261,7 +262,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
         String entityId = parts[4];
 
         try {
-            if ("posts".equals(type)) {
+            if ("post".equals(type)) {
                 return getPost(entityId);
             } else if ("comments".equals(type)) {
                 return getComment(entityId);
@@ -325,9 +326,9 @@ public class LearningLogManagerImpl implements LearningLogManager {
         String type = parts[3];
         String entityId = parts[4];
 
-        if ("posts".equals(type)) {
+        if ("post".equals(type)) {
 
-            reference.set(Constants.ENTITY_PREFIX,"posts" , entityId, null, siteId);
+            reference.set(Constants.ENTITY_PREFIX,"post" , entityId, null, siteId);
             return true;
         } else if ("comments".equals(type)) {
 
