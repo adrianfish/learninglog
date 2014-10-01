@@ -46,10 +46,7 @@ public class NewPostNotification extends SiteEmailNotification {
         String userDisplay = ServerConfigurationService.getString("ui.service", "Sakai");
         String no_reply = "From: \"" + userDisplay + "\" <" + userEmail + ">";
         String from = getFrom(event);
-        // get the message
-        Reference ref = EntityManager.newReference(event.getResource());
-        Post post = (Post) ref.getEntity();
-        String userId = post.getCreatorId();
+        String userId = event.getUserId();
 
         //checks if "from" email id has to be included? and whether the notification is a delayed notification?. SAK-13512
         if ((ServerConfigurationService.getString("emailFromReplyable@org.sakaiproject.event.api.NotificationService").equals("true")) && from.equals(no_reply) && userId !=null){
@@ -92,12 +89,11 @@ public class NewPostNotification extends SiteEmailNotification {
 	
 	protected String getSubject(Event event) {
 
-		Reference ref = EntityManager.newReference(event.getResource());
-        Post post = (Post) ref.getEntity();
+        String siteId = event.getContext();
         
         String siteTitle = "";
 		try {
-			siteTitle = SiteService.getSite(post.getSiteId()).getTitle();
+			siteTitle = SiteService.getSite(siteId).getTitle();
 		} catch (IdUnusedException e) {
 			e.printStackTrace();
 		}
@@ -107,10 +103,7 @@ public class NewPostNotification extends SiteEmailNotification {
 	
 	protected List<User> getRecipients(Event event) {
 
-		Reference ref = EntityManager.newReference(event.getResource());
-        Post post = (Post) ref.getEntity();
-
-        String siteId = post.getSiteId();
+        String siteId = event.getContext();
 
 		Set<String> tutorUserIds = new TreeSet<String>();
 

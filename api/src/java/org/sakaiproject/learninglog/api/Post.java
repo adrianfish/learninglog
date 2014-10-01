@@ -84,7 +84,7 @@ public class Post implements Entity {
     /** START ENTITY IMPL */
 
     public String getReference() {
-        return Constants.REFERENCE_ROOT + Entity.SEPARATOR + siteId  + Entity.SEPARATOR + "posts" + Entity.SEPARATOR + id;
+        return Constants.REFERENCE_ROOT + Entity.SEPARATOR + siteId  + Entity.SEPARATOR + "post" + Entity.SEPARATOR + id;
     }
 
     public String getReference(String rootProperty) {
