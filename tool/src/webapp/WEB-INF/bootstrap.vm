@@ -6,15 +6,15 @@
       xml:lang="${isolanguage}"
       lang="${isolanguage}">
 <head>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery-ui.js"></script>
+<script type="text/javascript" src="/library/js/jquery/jquery-1.9.1.min.js"></script>
+<script type="text/javascript" src="/library/js/jquery/ui/1.10.3/jquery-ui.1.10.3.full.min.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/trimpath-template-latest.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery.cluetip.min.js"></script>
+<script type="text/javascript" src="/library/js/jquery/cluetip/1.2.10/jquery.cluetip.min.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.min.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.pager.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.pager.min.js"></script>
 <script type="text/javascript" src="/profile2-tool/javascript/profile2-eb.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.MultiFile.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery.form.js"></script>
+<script type="text/javascript" src="/learninglog-tool/lib/jquery.form.min.js"></script>
 <script type="text/javascript">
 
     var learninglog = {
@@ -175,8 +175,8 @@ ${sakaiHtmlHead}
 		</thead>
 		<tbody>
             {for m in authors}
-		<tr>
-			<td><img src="/library/image/silk/user.png" width="16" height="16" alt="User"/>&nbsp;<a href="javascript:;" onclick="learninglog.switchState('userPosts',{userId:'${m.userId}'});" rel="/direct/profile/${m.userId}/formatted" class="showPostsLink">${m.userDisplayName}</a></td>
+        <tr>
+			<td><img src="/library/image/silk/user.png" width="16" height="16" alt="User" />&nbsp;<a href="javascript:;" onclick="learninglog.switchState('userPosts',{userId:'${m.userId}'});" rel="/direct/profile/${m.userId}/formatted" class="showPostsLink">${m.userDisplayName}</a></td>
 			<td>${m.numberOfPosts}</td>
 			<td>${m.formattedDateOfLastPost}</td>
 			<td>${m.numberOfComments}</td>
@@ -184,7 +184,7 @@ ${sakaiHtmlHead}
 		</tr>
 		{/for}
 		</tbody>
-	</table>
+    </table>
 -->
 </div>
 
