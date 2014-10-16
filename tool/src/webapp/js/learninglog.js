@@ -27,8 +27,6 @@ learninglog.switchState = function (state, args) {
 
  					learninglog.utils.attachProfilePopup();
 
-                    console.log('sdfsdf');
-
                     $.tablesorter.addParser({
                         id: 'learninglogDate',
                         is: function (s) {
