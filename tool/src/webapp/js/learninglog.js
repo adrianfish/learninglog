@@ -401,6 +401,19 @@ learninglog.resizeMainFrame = function () {
 		return learninglog.switchState('viewRecycled');
 	});
 
+	$('#blog_group_mode_link > span > a').click(function (e) {
+
+        if (learninglog.groupMode) {
+            this.textContent = blog_turn_group_mode_on_label;
+            this.title = blog_turn_group_mode_on_tooltip;
+            learninglog.groupMode = false;
+        } else {
+            this.textContent = blog_turn_group_mode_off_label;
+            this.title = blog_turn_group_mode_off_tooltip;
+            learninglog.groupMode = true;
+        }
+	});
+
 	if (!learninglog.startupArgs.isTutor) {
 		$("#blog_create_post_link").show();
     } else {
@@ -431,9 +444,11 @@ learninglog.resizeMainFrame = function () {
 	if (currentUserPermissions.modifyPermissions) {
 		$("#blog_permissions_link").show();
 		$("#blog_recycle_bin_link").show();
+		$("#blog_group_mode_link").show();
 	} else {
 		$("#blog_permissions_link").hide();
 		$("#blog_recycle_bin_link").hide();
+		$("#blog_group_mode_link").hide();
 	}
 
 	try {
