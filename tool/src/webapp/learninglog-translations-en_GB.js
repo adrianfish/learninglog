@@ -54,3 +54,7 @@ number_of_comments_prefix="This post has ";
 number_of_comments_suffix="comment(s).";
 show_hide_comments="Show/Hide them";
 none="-";
+blog_turn_group_mode_on_tooltip="Turn group mode on";
+blog_turn_group_mode_off_tooltip="Turn group mode off";
+blog_turn_group_mode_on_label="Group Mode On";
+blog_turn_group_mode_off_label="Group Mode Off";
