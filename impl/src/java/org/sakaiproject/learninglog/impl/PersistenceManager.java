@@ -9,14 +9,20 @@ import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.learninglog.api.*;
 import org.sakaiproject.learninglog.impl.sql.SQLGenerator;
+
+import org.sakaiproject.authz.api.Member;
+import org.sakaiproject.site.api.Group;
+import org.sakaiproject.site.api.Site;
 
 import lombok.Setter;
 
@@ -941,4 +947,85 @@ public class PersistenceManager {
 			sakaiProxy.returnConnection(connection);
 		}
 	}
+
+    public boolean setGroupMode(String siteId, String groupMode) {
+
+        if (logger.isDebugEnabled()) {
+			logger.debug("setGroupMode(" + siteId + "," + groupMode + ")");
+        }
+
+		Connection connection = null;
+		PreparedStatement st = null;
+		try {
+			connection = sakaiProxy.borrowConnection();
+			st = sqlGenerator.getInsertOrUpdateGroupMode(siteId, groupMode, connection);
+			int result = st.executeUpdate();
+			return true;
+		} catch (Exception e) {
+			logger.error("Caught exception whilst setting group mode", e);
+			return false;
+		} finally {
+
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception e) { }
+			}
+
+			sakaiProxy.returnConnection(connection);
+		}
+    }
+
+    public boolean isGroupMode(String siteId) {
+
+        if (logger.isDebugEnabled()) {
+			logger.debug("isGroupMode(" + siteId + ")");
+        }
+
+		Connection connection = null;
+		PreparedStatement st = null;
+		try {
+			connection = sakaiProxy.borrowConnection();
+			st = sqlGenerator.getSelectGroupMode(siteId, connection);
+			ResultSet rs = st.executeQuery();
+
+            if (rs.next() && rs.getString("GROUP_MODE").equals("Y")) {
+                return true;
+            } else {
+                return false;
+            }
+		} catch (Exception e) {
+			logger.error("Caught exception whilst getting group mode", e);
+
+            // This is the more secure response
+			return true;
+		} finally {
+
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception e) { }
+			}
+
+			sakaiProxy.returnConnection(connection);
+        }
+    }
+
+    public Set<String> getTutorsForStudent(String studentId, String siteId) {
+
+        Set<String> tutors = new HashSet<String>();
+
+        if (isGroupMode(siteId)) {
+            Site site = sakaiProxy.getSite(siteId);
+            for (Group group : site.getGroupsWithMember(studentId)) {
+                for (Member member : group.getMembers()) {
+                    if (getLLRole(siteId, member.getRole().getId()).equals(Roles.TUTOR)) {
+                        tutors.add(member.getUserId());
+                    }
+                }
+            }
+        }
+
+        return tutors;
+    }
 }

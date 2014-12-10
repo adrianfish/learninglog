@@ -165,7 +165,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
 
 	public List<BlogMember> getAuthors(String siteId) {
 
-		List<BlogMember> authors = sakaiProxy.getSiteMembers(siteId);
+		List<BlogMember> authors = securityManager.filterAuthors(sakaiProxy.getSiteMembers(siteId));
 		for (BlogMember author : authors) {
 			persistenceManager.populateAuthorData(author, siteId);
 		}
@@ -228,7 +228,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
 
 	public String getCurrentUserRole(String siteId) {
 
-		Role sakaiRole = sakaiProxy.getRoleForCurrentUser(siteId);
+		Role sakaiRole = sakaiProxy.getRoleForUser(sakaiProxy.getCurrentUserId(), siteId);
 		String llRole = persistenceManager.getLLRole(siteId, sakaiRole.getId());
         if(llRole == null) {
             logger.info("There is no LL Role for the current user. Returning 'Student' ...");
@@ -240,6 +240,14 @@ public class LearningLogManagerImpl implements LearningLogManager {
 	public boolean deleteAttachment(String siteId, String name, String postId) {
 		return persistenceManager.deleteAttachment(siteId, name, postId);
 	}
+
+    public boolean setGroupMode(String siteId, String groupMode) {
+		return persistenceManager.setGroupMode(siteId, groupMode);
+    }
+
+    public boolean isGroupMode(String siteId) {
+		return persistenceManager.isGroupMode(siteId);
+    }
 
     /** START EntityProducer IMPL */
 

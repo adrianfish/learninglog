@@ -380,6 +380,49 @@ learninglog.resizeMainFrame = function () {
     }
 };
 
+learninglog.groupModeHandler = function () {
+
+    if (learninglog.groupMode) {
+        learninglog.setGroupMode(false, $(this));
+    } else {
+        learninglog.setGroupMode(true, $(this));
+    }
+};
+
+learninglog.setGroupMode = function (mode, link) {
+
+    link.off('click');
+
+    $.ajax({
+        url: '/direct/learninglog-post/set-group-mode?siteId=' + this.startupArgs.blogSiteId + '&groupMode=' + ((mode) ? 'Y' : 'N') ,
+        dataType: 'text',
+        cache: false,
+        success: function (data, textStatus, jqXHR) {
+
+            console.log("DATA: " + data);
+
+            learninglog.groupMode = mode;
+
+            if (mode == false) {
+                link
+                    .html(blog_turn_group_mode_on_label)
+                    .attr('title', blog_turn_group_mode_on_tooltip);
+            } else {
+                link
+                    .html(blog_turn_group_mode_off_label)
+                    .attr('title', blog_turn_group_mode_off_tooltip);
+            }
+
+            link.on('click', learninglog.groupModeHandler);
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+           console.log('sdfsdf');
+       }
+    });
+
+    return false;
+};
+
 (function () {
 
 	// We need the toolbar in a template so we can swap in the translations
@@ -401,18 +444,7 @@ learninglog.resizeMainFrame = function () {
 		return learninglog.switchState('viewRecycled');
 	});
 
-	$('#blog_group_mode_link > span > a').click(function (e) {
-
-        if (learninglog.groupMode) {
-            this.textContent = blog_turn_group_mode_on_label;
-            this.title = blog_turn_group_mode_on_tooltip;
-            learninglog.groupMode = false;
-        } else {
-            this.textContent = blog_turn_group_mode_off_label;
-            this.title = blog_turn_group_mode_off_tooltip;
-            learninglog.groupMode = true;
-        }
-	});
+	$('#blog_group_mode_link > span > a').on('click', learninglog.groupModeHandler);
 
 	if (!learninglog.startupArgs.isTutor) {
 		$("#blog_create_post_link").show();
@@ -444,7 +476,16 @@ learninglog.resizeMainFrame = function () {
 	if (currentUserPermissions.modifyPermissions) {
 		$("#blog_permissions_link").show();
 		$("#blog_recycle_bin_link").show();
-		$("#blog_group_mode_link").show();
+
+		var groupModeLink = $("#blog_group_mode_link");
+
+        if (learninglog.groupMode) {
+            groupModeLink.find('a')
+                .html(blog_turn_group_mode_off_label)
+                .attr('title', blog_turn_group_mode_off_tooltip);
+        }
+
+		groupModeLink.show();
 	} else {
 		$("#blog_permissions_link").hide();
 		$("#blog_recycle_bin_link").hide();

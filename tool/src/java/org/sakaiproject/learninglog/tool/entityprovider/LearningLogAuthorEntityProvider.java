@@ -34,6 +34,7 @@ public class LearningLogAuthorEntityProvider extends AbstractEntityProvider impl
 	public void init() { }
 	
 	public boolean entityExists(String id) {
+
 		if(LOG.isDebugEnabled()) LOG.debug("entityExists("  + id + ")");
 
 		if (id == null) {

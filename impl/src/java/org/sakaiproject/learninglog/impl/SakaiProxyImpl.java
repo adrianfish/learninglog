@@ -46,6 +46,7 @@ import org.sakaiproject.event.api.UsageSessionService;
 import org.sakaiproject.exception.IdUnusedException;
 import org.sakaiproject.exception.IdUsedException;
 import org.sakaiproject.learninglog.api.*;
+import org.sakaiproject.site.api.Group;
 import org.sakaiproject.site.api.Site;
 import org.sakaiproject.site.api.SiteService;
 import org.sakaiproject.site.api.ToolConfiguration;
@@ -259,11 +260,11 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return null;
 	}
 
-	public Role getRoleForCurrentUser(String siteId) {
+	public Role getRoleForUser(String userId, String siteId) {
 
 		try {
 			Site site = siteService.getSite(siteId);
-			return site.getUserRole(getCurrentUserId());
+			return site.getUserRole(userId);
 		} catch (IdUnusedException iue) {
 			logger.error("There is no site with id '" + siteId + "'. Null will be returned.");
 		}
@@ -429,5 +430,35 @@ public class SakaiProxyImpl implements SakaiProxy {
 
     public NotificationEdit addTransientNotification() {
         return notificationService.addTransientNotification();
+    }
+
+    public boolean canModifyPermissions(String siteId) {
+        return securityService.unlock(BlogFunctions.BLOG_MODIFY_PERMISSIONS, "/site/" + siteId)
+            || securityService.unlock(SiteService.SECURE_UPDATE_SITE, "/site/" + siteId);
+    }
+
+    public Site getSite(String siteId) {
+
+		try {
+			return siteService.getSite(siteId);
+		} catch (Exception e) {
+			e.printStackTrace();
+            return null;
+		}
+    }
+
+    public Set<String> getFellowGroupMembers(String userId, String siteId) {
+
+        Site site = getSite(siteId);
+
+        Set<String> fellowMembers = new HashSet<String>();
+
+        for (Group group : site.getGroupsWithMember(userId)) {
+            fellowMembers.addAll(group.getUsers());
+        }
+
+        fellowMembers.remove(userId);
+
+        return fellowMembers;
     }
 }

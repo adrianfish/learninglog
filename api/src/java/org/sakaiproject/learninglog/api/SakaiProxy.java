@@ -29,6 +29,7 @@ import org.sakaiproject.learninglog.api.BlogMember;
 import org.sakaiproject.learninglog.api.Post;
 import org.sakaiproject.user.api.User;
 import org.sakaiproject.user.api.UserNotDefinedException;
+import org.sakaiproject.site.api.Site;
 
 public interface SakaiProxy {
 
@@ -74,7 +75,7 @@ public interface SakaiProxy {
 
 	public Set<Role> getSiteRoles(String siteId);
 
-	public Role getRoleForCurrentUser(String siteId);
+	public Role getRoleForUser(String userId, String siteId);
 
 	public Set<String> getUsersInRole(String siteId, String role);
 
@@ -96,4 +97,10 @@ public interface SakaiProxy {
 	public void deleteAttachments(Post post) throws Exception;
 
     public NotificationEdit addTransientNotification();
+
+    public boolean canModifyPermissions(String siteId);
+
+    public Set<String> getFellowGroupMembers(String userId, String siteId);
+
+    public Site getSite(String siteId);
 }

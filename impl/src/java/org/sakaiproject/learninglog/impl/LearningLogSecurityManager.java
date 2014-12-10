@@ -19,6 +19,7 @@ package org.sakaiproject.learninglog.impl;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
 
 import org.apache.log4j.Logger;
 
@@ -39,17 +40,19 @@ public class LearningLogSecurityManager {
 
     public boolean canCurrentUserCommentOnPost(Post post) {
 
-    	if(logger.isDebugEnabled()) logger.debug("canCurrentUserCommentOnPost()");
+    	logger.debug("canCurrentUserCommentOnPost()");
     	
     	String siteId = post.getSiteId();
+
+        String currentUser = sakaiProxy.getCurrentUserId();
 		
 		// If the post is comment-able and the current user is a tutor in the post's site
-		if(post.isReady() && Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForCurrentUser(siteId).getId()))) {
+		if (post.isReady() && Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId).getId()))) {
 			return true;
         }
 		
 		// An author can always comment on their own posts
-		if(post.isReady() && post.getCreatorId().equals(sakaiProxy.getCurrentUserId())) {
+		if (post.isReady() && post.getCreatorId().equals(currentUser)) {
 			return true;
         }
 		
@@ -59,15 +62,15 @@ public class LearningLogSecurityManager {
 	public boolean canCurrentUserDeletePost(Post post) throws SecurityException {
 
     	String siteId = post.getSiteId();
+
+        String currentUser = sakaiProxy.getCurrentUserId();
     	
-		if(Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForCurrentUser(siteId).getId()))) {
+		if (Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId).getId()))) {
 			return true;
         }
 		
-		String currentUser = sakaiProxy.getCurrentUserId();
-		
 		// If the current user is the author and the post is not yet ready
-		if(!post.isReady() && currentUser != null && currentUser.equals(post.getCreatorId())) {
+		if (!post.isReady() && currentUser != null && currentUser.equals(post.getCreatorId())) {
 			return true;
         }
 		
@@ -79,7 +82,7 @@ public class LearningLogSecurityManager {
 		String currentUser = sakaiProxy.getCurrentUserId();
 		
 		// If the current user is authenticated and the post author, yes.
-		if(post.isReady() && currentUser != null && currentUser.equals(post.getCreatorId())) {
+		if (post.isReady() && currentUser != null && currentUser.equals(post.getCreatorId())) {
 			return true;
         }
 		
@@ -109,26 +112,36 @@ public class LearningLogSecurityManager {
 
 		String threadName = Thread.currentThread().getName();
 		
-		if(!post.isPrivate() && "IndexManager".equals(threadName)) return true;
+		if (!post.isPrivate() && "IndexManager".equals(threadName)) return true;
 		
     	String siteId = post.getSiteId();
-		
-	    String llRole = persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForCurrentUser(siteId).getId());
 
-		// Only tutors can view recycled posts
-		if(post.isRecycled() && Roles.TUTOR.equals(llRole)) {
-			return true;
-        }
-			
-		if(post.isReady() && Roles.TUTOR.equals(llRole)) {
-			return true;
-        }
-		
 		String currentUser = sakaiProxy.getCurrentUserId();
-		
+
 		// If the current user is authenticated and the post author, yes.
-		if(currentUser != null && currentUser.equals(post.getCreatorId())) {
+		if (currentUser != null && currentUser.equals(post.getCreatorId())) {
 			return true;
+        }
+
+		if (post.isRecycled() || post.isReady()) {
+            if (persistenceManager.isGroupMode(siteId)) {
+                // Is the current user a tutor in any of the groups which the author
+                // belongs to?
+
+                Set<String> tutors = persistenceManager.getTutorsForStudent(post.getCreatorId(), siteId);
+
+                if (tutors.contains(currentUser)) {
+                    return true;
+                }
+            } else {
+		
+                String llRole = persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId).getId());
+
+                // Only tutors can view recycled posts
+                if (Roles.TUTOR.equals(llRole)) {
+                    return true;
+                }
+            }
         }
 		
 		return false;
@@ -152,6 +165,13 @@ public class LearningLogSecurityManager {
 		return filtered;
 	}
 
+    public List<BlogMember> filterAuthors(List<BlogMember> unfiltered) {
+
+        String currentUserId = sakaiProxy.getCurrentUserId();
+
+        return unfiltered;
+    }
+
 	public boolean canCurrentUserReadComment(Comment comment, Post post) {
 
         if(comment == null) {
@@ -169,7 +189,7 @@ public class LearningLogSecurityManager {
 
     	String siteId = comment.getSiteId();
 
-        Role sakaiRole = sakaiProxy.getRoleForCurrentUser(siteId);
+        Role sakaiRole = sakaiProxy.getRoleForUser(currentUserId, siteId);
 
         if(sakaiRole == null) {
             logger.warn("No role. Returning false ...");

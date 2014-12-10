@@ -102,6 +102,8 @@ public class LearningLogTool extends HttpServlet {
             isoLanguage += "_" + country;
         }
 
+        boolean isGroupMode = llManager.isGroupMode(siteId);
+
         boolean isTutor = llManager.getCurrentUserRole(siteId).equals("Tutor");
 		
 		VelocityContext ctx = new VelocityContext();
@@ -109,14 +111,15 @@ public class LearningLogTool extends HttpServlet {
         // This is needed so certain trimpath variables don't get parsed.
         ctx.put("D", "$");
 
-        ctx.put("sakaiHtmlHead",sakaiHtmlHead);
-        ctx.put("siteId",siteId);
-        ctx.put("isTutor",isTutor ? "true" : "false");
-        ctx.put("placementId",placementId);
-        ctx.put("postId",postId);
-        ctx.put("isolanguage",isoLanguage);
-        ctx.put("language",language);
-        ctx.put("country",country);
+        ctx.put("sakaiHtmlHead", sakaiHtmlHead);
+        ctx.put("siteId", siteId);
+        ctx.put("isTutor", isTutor ? "true" : "false");
+        ctx.put("placementId", placementId);
+        ctx.put("postId", postId);
+        ctx.put("isolanguage", isoLanguage);
+        ctx.put("language", language);
+        ctx.put("country", country);
+        ctx.put("groupMode", isGroupMode ? "true" : "false");
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("text/html");
