@@ -18,6 +18,7 @@
 <script type="text/javascript">
 
     var learninglog = {
+        groupMode: ${groupMode},
         startupArgs: {
             isTutor:${isTutor},
             blogSiteId:'${siteId}',

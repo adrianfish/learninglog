@@ -159,6 +159,8 @@ public final class LearningLogPostEntityProvider extends AbstractEntityProvider 
 				
 				// Send an email to all site participants apart from the author
 				learningLogManager.sendNewPostAlert(post);
+
+                //learningLogManager.alertTutors(post);
 			}
 			
 			try {
@@ -401,17 +403,17 @@ public final class LearningLogPostEntityProvider extends AbstractEntityProvider 
 		
 		final String userId = developerHelperService.getCurrentUserId();
 		
-		if(userId == null) {
+		if (userId == null) {
 			throw new EntityException("You must be logged in to delete posts","",HttpServletResponse.SC_UNAUTHORIZED);
 		}
 		
-		if(!params.containsKey("posts")) {
+		if (!params.containsKey("posts")) {
 			throw new EntityException("Bad request: a posts param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
 		}
 		
 		final String siteId = (String) params.get("site");
 		
-		if(siteId == null) {
+		if (siteId == null) {
 			throw new EntityException("Bad request: a site param must be supplied","",HttpServletResponse.SC_BAD_REQUEST);
 		}
 		
@@ -419,7 +421,7 @@ public final class LearningLogPostEntityProvider extends AbstractEntityProvider 
 		
 		final String[] postIds = postIdsString.split(",");
 		
-		for(String postId : postIds) {
+		for (String postId : postIds) {
 
 			if (learningLogManager.deletePost(postId)) {
 				final String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/posts/" + postId;
@@ -429,6 +431,35 @@ public final class LearningLogPostEntityProvider extends AbstractEntityProvider 
 		
 		return "SUCCESS";
 	}
+
+    @EntityCustomAction(action = "set-group-mode", viewKey = EntityView.VIEW_LIST)
+	public String handleSetGroupMode(EntityView view, Map<String,Object> params) {
+
+		final String userId = developerHelperService.getCurrentUserId();
+		
+		if (userId == null) {
+			throw new EntityException("You must be logged in to set group mode", "", HttpServletResponse.SC_UNAUTHORIZED);
+		}
+
+		final String siteId = (String) params.get("siteId");
+		
+		if (siteId == null) {
+			throw new EntityException("Bad request: a site param must be supplied", "", HttpServletResponse.SC_BAD_REQUEST);
+        }
+
+        final String groupMode = (String) params.get("groupMode");
+
+		if (groupMode == null) {
+			throw new EntityException("Bad request: a group mode must be supplied", "", HttpServletResponse.SC_BAD_REQUEST);
+        }
+
+        if (sakaiProxy.canModifyPermissions(siteId)) {
+            learningLogManager.setGroupMode(siteId, groupMode);
+        }
+
+        return "SUCCESS";
+	}
+
 
 	/**
 	 * From Statisticable

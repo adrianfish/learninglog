@@ -55,6 +55,7 @@ public class SQLGenerator {
 		result.add(doTableForAuthor());
 		result.add(doTableForRole());
 		result.add(doTableForAttachments());
+		result.add(doTableForSettings());
 		return result;
 	}
 
@@ -210,6 +211,10 @@ public class SQLGenerator {
 
 	protected String doTableForAttachments() {
 		return "CREATE TABLE LL_ATTACHMENTS (ID INT NOT NULL AUTO_INCREMENT,POST_ID CHAR(36) NOT NULL, NAME " + VARCHAR + "(255) NOT NULL, PRIMARY KEY(ID))";
+	}
+
+	protected String doTableForSettings() {
+		return "CREATE TABLE LL_SETTINGS (SITE_ID " + VARCHAR + "(255) NOT NULL,GROUP_MODE CHAR(1) NOT NULL,PRIMARY KEY(SITE_ID))";
 	}
 
 	public String getSelectComments(String postId) {
@@ -695,4 +700,40 @@ public class SQLGenerator {
 		st.setString(1, commentId);
 		return st;
 	}
+
+    public PreparedStatement getInsertOrUpdateGroupMode(String siteId, String groupMode, Connection connection) throws Exception {
+
+        PreparedStatement testST = null;
+
+        try {
+            testST = connection.prepareStatement("SELECT * FROM LL_SETTINGS WHERE SITE_ID = ?");
+            testST.setString(1, siteId);
+            ResultSet rs = testST.executeQuery();
+
+            if (rs.next()) {
+                PreparedStatement st = connection.prepareStatement("UPDATE LL_SETTINGS SET GROUP_MODE = ? WHERE SITE_ID = ?");
+                st.setString(1, groupMode);
+                st.setString(2, siteId);
+                return st;
+            } else {
+                PreparedStatement st = connection.prepareStatement("INSERT INTO LL_SETTINGS (SITE_ID, GROUP_MODE) VALUES(?,?)");
+                st.setString(1, siteId);
+                st.setString(2, groupMode);
+                return st;
+            }
+        } finally {
+            if (testST != null) {
+                try {
+                    testST.close();
+                } catch (SQLException e) {}
+            }
+        }
+    }
+
+    public PreparedStatement getSelectGroupMode(String siteId, Connection connection) throws Exception {
+
+        PreparedStatement st = connection.prepareStatement("SELECT GROUP_MODE FROM LL_SETTINGS WHERE SITE_ID = ?");
+        st.setString(1, siteId);
+        return st;
+    }
 }

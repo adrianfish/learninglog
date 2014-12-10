@@ -42,4 +42,8 @@ public interface LearningLogManager extends EntityProducer {
 	public String getCurrentUserRole(String siteId);
 
 	public boolean deleteAttachment(String siteId, String name, String postId);
+
+    public boolean setGroupMode(String siteId, String groupMode);
+
+    public boolean isGroupMode(String siteId);
 }

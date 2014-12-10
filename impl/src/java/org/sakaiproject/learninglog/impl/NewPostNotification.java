@@ -105,16 +105,33 @@ public class NewPostNotification extends SiteEmailNotification {
 
         String siteId = event.getContext();
 
+        String userId = event.getUserId();
+
 		Set<String> tutorUserIds = new TreeSet<String>();
 
-		Set<Role> sakaiRoles = sakaiProxy.getSiteRoles(siteId);
-		for (Role sakaiRole : sakaiRoles) {
-            String sakaiRoleId = sakaiRole.getId();
-			String llRole = persistenceManager.getLLRole(siteId, sakaiRoleId);
-			if (Roles.TUTOR.equals(llRole)) {
-				tutorUserIds.addAll(sakaiProxy.getUsersInRole(siteId, sakaiRoleId));
-			}
-		}
+        if (persistenceManager.isGroupMode(siteId)) {
+            Set<String> fellowMembers = sakaiProxy.getFellowGroupMembers(userId, siteId);
+            for (String fellowMember : fellowMembers) {
+                String sakaiRoleId = sakaiProxy.getRoleForUser(fellowMember, siteId).getId();
+                String llRole = persistenceManager.getLLRole(siteId, sakaiRoleId);
+                if (Roles.TUTOR.equals(llRole)) {
+                    tutorUserIds.add(fellowMember);
+                }
+            }
+        } else {
+            Set<Role> sakaiRoles = sakaiProxy.getSiteRoles(siteId);
+            for (Role sakaiRole : sakaiRoles) {
+                String sakaiRoleId = sakaiRole.getId();
+                String llRole = persistenceManager.getLLRole(siteId, sakaiRoleId);
+                if (Roles.TUTOR.equals(llRole)) {
+                    tutorUserIds.addAll(sakaiProxy.getUsersInRole(siteId, sakaiRoleId));
+                }
+            }
+        }
+
+        for (String tutorUserId : tutorUserIds) {
+            System.out.println("TUTOR USER ID: " + tutorUserId);
+        }
 
 		tutorUserIds.remove("admin");
         
