@@ -165,7 +165,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
 
 	public List<BlogMember> getAuthors(String siteId) {
 
-		List<BlogMember> authors = securityManager.filterAuthors(sakaiProxy.getSiteMembers(siteId));
+		List<BlogMember> authors = securityManager.filterAuthors(sakaiProxy.getSiteMembers(siteId, persistenceManager), siteId);
 		for (BlogMember author : authors) {
 			persistenceManager.populateAuthorData(author, siteId);
 		}

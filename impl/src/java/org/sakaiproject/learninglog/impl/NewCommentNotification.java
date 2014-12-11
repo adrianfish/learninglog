@@ -19,6 +19,7 @@ import org.sakaiproject.util.ResourceLoader;
 import org.sakaiproject.util.SiteEmailNotification;
 
 import org.sakaiproject.learninglog.api.Comment;
+import org.sakaiproject.learninglog.api.PersistenceManager;
 import org.sakaiproject.learninglog.api.Post;
 import org.sakaiproject.learninglog.api.Roles;
 import org.sakaiproject.learninglog.api.SakaiProxy;

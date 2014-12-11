@@ -25,6 +25,7 @@ import java.util.Set;
 
 import org.apache.log4j.Logger;
 import org.sakaiproject.authz.api.FunctionManager;
+import org.sakaiproject.authz.api.Member;
 import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.authz.api.SecurityAdvisor;
 import org.sakaiproject.authz.api.SecurityService;
@@ -136,16 +137,18 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return autoDDL.equals("true");
 	}
 
-	public List<BlogMember> getSiteMembers(String siteId) {
+	public List<BlogMember> getSiteMembers(String siteId, PersistenceManager persistenceManager) {
 
 		ArrayList<BlogMember> result = new ArrayList<BlogMember>();
+
 		try {
 			Site site = siteService.getSite(siteId);
-			Set<String> userIds = site.getUsers();
-			for (String userId : userIds) {
+			for (Member siteMember : site.getMembers()) {
 				try {
+                    String userId = siteMember.getUserId();
 					User sakaiUser = userDirectoryService.getUser(userId);
 					BlogMember member = new BlogMember(sakaiUser);
+                    member.setRole(persistenceManager.getLLRole(siteId, siteMember.getRole().getId()));
 					result.add(member);
 				} catch (UserNotDefinedException unde) {
 					logger.error("Failed to get site member details", unde);

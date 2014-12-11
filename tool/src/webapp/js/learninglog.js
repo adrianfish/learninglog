@@ -414,6 +414,8 @@ learninglog.setGroupMode = function (mode, link) {
             }
 
             link.on('click', learninglog.groupModeHandler);
+
+            learninglog.switchState('home');
         },
         error: function (jqXHR, textStatus, errorThrown) {
            console.log('sdfsdf');
