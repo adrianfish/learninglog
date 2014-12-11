@@ -25,6 +25,8 @@ import org.apache.log4j.Logger;
 
 import org.sakaiproject.authz.api.Role;
 import org.sakaiproject.learninglog.api.*;
+import org.sakaiproject.site.api.Group;
+import org.sakaiproject.site.api.Site;
 
 import lombok.Setter;
 
@@ -165,11 +167,41 @@ public class LearningLogSecurityManager {
 		return filtered;
 	}
 
-    public List<BlogMember> filterAuthors(List<BlogMember> unfiltered) {
+    public List<BlogMember> filterAuthors(List<BlogMember> unfiltered, String siteId) {
 
-        String currentUserId = sakaiProxy.getCurrentUserId();
+        Site site = sakaiProxy.getSite(siteId);
 
-        return unfiltered;
+        List<String> userIds = new ArrayList<String>();
+
+        if (site == null) {
+            return new ArrayList<BlogMember>();
+        } else {
+            String currentUserId = sakaiProxy.getCurrentUserId();
+
+            if (site.getMember(currentUserId) == null) {
+                return new ArrayList<BlogMember>();
+            } else {
+                if (persistenceManager.isGroupMode(siteId)) {
+                    for (Group group : site.getGroupsWithMember(currentUserId)) {
+                        userIds.addAll(group.getUsers());
+                    }
+                } else {
+                    userIds.addAll(site.getUsers());
+                }
+            }
+
+            List<BlogMember> filtered = new ArrayList<BlogMember>();
+
+            for (BlogMember unfilteredMember : unfiltered) {
+                if (unfilteredMember.isStudent()) {
+                    if (userIds.contains(unfilteredMember.getUserId())) {
+                        filtered.add(unfilteredMember);
+                    }
+                }
+            }
+
+            return filtered;
+        }
     }
 
 	public boolean canCurrentUserReadComment(Comment comment, Post post) {

@@ -49,7 +49,7 @@ public interface SakaiProxy {
 
 	public boolean isAutoDDL();
 
-	public List<BlogMember> getSiteMembers(String siteId);
+	public List<BlogMember> getSiteMembers(String siteId, PersistenceManager persistenceManager);
 
 	public String getServerUrl();
 

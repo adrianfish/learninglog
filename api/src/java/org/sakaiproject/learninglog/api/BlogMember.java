@@ -20,6 +20,8 @@ public class BlogMember {
 
 	// We don't want this serialising by EB :)
 	private transient User sakaiUser = null;
+
+    private String role = Roles.STUDENT;
 	
 	public BlogMember() { }
 	
@@ -39,4 +41,12 @@ public class BlogMember {
 	public String getUserDisplayName() {
 		return sakaiUser.getLastName() + ", " + sakaiUser.getFirstName();
 	}
+
+    public boolean isStudent() {
+        return role.equals(Roles.STUDENT);
+    }
+
+    public boolean isTutor() {
+        return role.equals(Roles.TUTOR);
+    }
 }
