@@ -69,7 +69,8 @@ public class LearningLogTool extends HttpServlet {
 		if(sakaiProxy == null) {
 			throw new ServletException("sakaiProxy MUST be initialised.");
 		}
-		
+
+
 		String state = request.getParameter("state");
 		String postId = request.getParameter("postId");
 		
@@ -86,6 +87,8 @@ public class LearningLogTool extends HttpServlet {
         }
 		
 		String siteId = sakaiProxy.getCurrentSiteId();
+
+        llManager.setupRolesIfFirstUseInSite(siteId);
 		
         String placementId = (String) request.getAttribute(Tool.PLACEMENT_ID);
 

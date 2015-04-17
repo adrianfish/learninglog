@@ -9,6 +9,8 @@ import org.sakaiproject.learninglog.api.*;
 
 public interface LearningLogManager extends EntityProducer {
 
+    public void setupRolesIfFirstUseInSite(String siteId);
+
 	public Post getPost(String postId) throws Exception;
 
 	public List<Post> getPosts(String placementId) throws Exception;

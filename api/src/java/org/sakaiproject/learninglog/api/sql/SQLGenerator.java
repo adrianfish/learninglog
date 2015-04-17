@@ -49,6 +49,7 @@ public class SQLGenerator {
 	public List<String> getCreateTablesStatements() {
 		ArrayList result = new ArrayList();
 
+		result.add(doTableForSitesUsedIn());
 		result.add(doTableForPost());
 		result.add(doTableForComment());
 		result.add(doTableForAutoSavedComment());
@@ -58,6 +59,20 @@ public class SQLGenerator {
 		result.add(doTableForSettings());
 		return result;
 	}
+
+    public PreparedStatement getSelectUsedInSiteStatement(String siteId, Connection conn) throws Exception {
+
+        PreparedStatement st = conn.prepareStatement("SELECT * FROM LL_SITES_USED_IN WHERE SITE_ID = ?");
+        st.setString(1, siteId);
+        return st;
+    }
+
+    public PreparedStatement getInsertUsedInSiteStatement(String siteId, Connection conn) throws Exception {
+
+        PreparedStatement st = conn.prepareStatement("INSERT INTO LL_SITES_USED_IN (SITE_ID) VALUES(?)");
+        st.setString(1, siteId);
+        return st;
+    }
 
 	public List<String> getSelectStatementsForQuery(QueryBean query) {
 		List<String> statements = new ArrayList<String>();
@@ -145,6 +160,17 @@ public class SQLGenerator {
 		statement.append("CREATED_DATE " + TIMESTAMP + " NOT NULL" + ", ");
 		statement.append("MODIFIED_DATE " + TIMESTAMP + ", ");
 		statement.append("CONSTRAINT ll_post_pk PRIMARY KEY (POST_ID)");
+		statement.append(")");
+		return statement.toString();
+	}
+
+	private final String doTableForSitesUsedIn() {
+
+		StringBuilder statement = new StringBuilder();
+		statement.append("CREATE TABLE LL_SITES_USED_IN");
+		statement.append("(");
+		statement.append("SITE_ID " + VARCHAR + "(255) NOT NULL, ");
+		statement.append("CONSTRAINT ll_sites_used_in_pk PRIMARY KEY (SITE_ID)");
 		statement.append(")");
 		return statement.toString();
 	}

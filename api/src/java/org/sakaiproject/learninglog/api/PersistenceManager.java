@@ -55,9 +55,8 @@ public class PersistenceManager {
 			boolean oldAutoCommitFlag = connection.getAutoCommit();
 			connection.setAutoCommit(false);
 
-			statement = connection.createStatement();
-
 			try {
+			    statement = connection.createStatement();
 				
 				for (String sql : sqlGenerator.getCreateTablesStatements()) {
 					statement.executeUpdate(sql);
@@ -87,6 +86,45 @@ public class PersistenceManager {
 		return false;
 	}
 
+    public boolean returnFirstUseInSiteThenSet(String siteId) {
+
+		Connection conn = null;
+		PreparedStatement st = null;
+		PreparedStatement st2 = null;
+
+		try {
+			conn = sakaiProxy.borrowConnection();
+			logger.debug("isAutoCommit: " + conn.getAutoCommit());
+			st = sqlGenerator.getSelectUsedInSiteStatement(siteId, conn);
+            ResultSet rs = st.executeQuery();
+            boolean isFirst = !rs.next();
+            rs.close();
+
+            if (isFirst) {
+                st2 = sqlGenerator.getInsertUsedInSiteStatement(siteId, conn);
+                st2.execute();
+                conn.commit();
+            }
+
+            return isFirst;
+        } catch (Exception e) {
+            logger.error("Failed to query first use table. Returning false ...", e);
+            return false;
+        } finally {
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception e) {}
+			}
+			if (st2 != null) {
+				try {
+					st2.close();
+				} catch (Exception e) {}
+			}
+			sakaiProxy.returnConnection(conn);
+        }
+    }
+
 	public boolean existPost(String postId) throws Exception {
 
 		Connection connection = null;
@@ -113,7 +151,6 @@ public class PersistenceManager {
 	}
 
 	public List<Post> getAllPost(String placementId) throws Exception {
-		
 		return getAllPost(placementId, false);
 	}
 
@@ -214,13 +251,13 @@ public class PersistenceManager {
 			boolean oldAutoCommit = connection.getAutoCommit();
 			connection.setAutoCommit(false);
 
-            if(comment.isAutoSave()) {
-                statements = sqlGenerator.getInsertStatementsForAutoSavedComment(comment, connection);
-            } else {
-                statements = sqlGenerator.getInsertStatementsForComment(comment, connection);
-            }
-
 			try {
+                if (comment.isAutoSave()) {
+                    statements = sqlGenerator.getInsertStatementsForAutoSavedComment(comment, connection);
+                } else {
+                    statements = sqlGenerator.getInsertStatementsForComment(comment, connection);
+                }
+
 				for (PreparedStatement st : statements) {
 					st.executeUpdate();
                 }
