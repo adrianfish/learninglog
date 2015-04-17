@@ -82,6 +82,10 @@ public class SakaiProxyImpl implements SakaiProxy {
 	
 	public void init() {}
 
+    public String[] getStrings(String name) {
+        return serverConfigurationService.getStrings(name);
+    }
+
 	public String getCurrentSiteId() {
 		return toolManager.getCurrentPlacement().getContext();
 	}

@@ -33,6 +33,8 @@ import org.sakaiproject.site.api.Site;
 
 public interface SakaiProxy {
 
+    public String[] getStrings(String name);
+
 	public String getCurrentSiteId();
 
 	public String getCurrentUserId();

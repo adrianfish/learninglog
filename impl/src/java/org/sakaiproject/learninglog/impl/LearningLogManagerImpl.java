@@ -2,6 +2,7 @@ package org.sakaiproject.learninglog.impl;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -32,6 +33,7 @@ public class LearningLogManagerImpl implements LearningLogManager {
 	private PersistenceManager persistenceManager;
 	private LearningLogSecurityManager securityManager;
 	private SakaiProxy sakaiProxy;
+    private Map<String, String> roleMappings = new HashMap<String, String>();
 
 	public void init() {
 
@@ -53,7 +55,49 @@ public class LearningLogManagerImpl implements LearningLogManager {
         ncn.setSakaiProxy(sakaiProxy);
         ncn.setPersistenceManager(persistenceManager);
         ne2.setAction(ncn);
+
+        String[] llRoleMappings = sakaiProxy.getStrings("llRoleMappings");
+
+        if (llRoleMappings == null) {
+            roleMappings.put("Administrator", Roles.TUTOR);
+            roleMappings.put("Faculty", Roles.TUTOR);
+            roleMappings.put("Instructor", Roles.TUTOR);
+            roleMappings.put("instructor", Roles.TUTOR);
+            roleMappings.put("maintain", Roles.TUTOR);
+            roleMappings.put("Mentor", Roles.TUTOR);
+            roleMappings.put("Observer", Roles.TUTOR);
+            roleMappings.put("tutor", Roles.TUTOR);
+            roleMappings.put("Tutor", Roles.TUTOR);
+            roleMappings.put("Staff", Roles.TUTOR);
+        } else {
+            for (String mapping : llRoleMappings) {
+                String[] m = mapping.split(":");
+                roleMappings.put(m[0], m[1]);
+            }
+        }
 	}
+
+    public void setupRolesIfFirstUseInSite(String siteId) {
+
+        if (persistenceManager.returnFirstUseInSiteThenSet(siteId)) {
+            logger.debug("First use in site. Setting up ll role mappings ...");
+            Map<String, String> mappings = new HashMap<String, String>();
+            Set<Role> sakaiRoles = sakaiProxy.getSiteRoles(siteId);
+            for (Role sakaiRole : sakaiRoles) {
+                String llRole = roleMappings.get(sakaiRole.getId());
+                if (llRole == null) {
+                    llRole = Roles.STUDENT;
+                }
+                if (logger.isDebugEnabled()) {
+                    logger.debug("sakaiRole: " + sakaiRole.getId() + " -> " + llRole);
+                }
+                mappings.put(sakaiRole.getId(), llRole);
+            }
+            saveRoles(siteId, mappings);
+        } else {
+            logger.debug("Not first use in site");
+        }
+    }
 
 	public Post getPost(String postId) throws Exception {
 
