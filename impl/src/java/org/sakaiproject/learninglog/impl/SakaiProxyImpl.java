@@ -267,11 +267,16 @@ public class SakaiProxyImpl implements SakaiProxy {
 		return null;
 	}
 
-	public Role getRoleForUser(String userId, String siteId) {
+	public String getRoleForUser(String userId, String siteId) {
 
 		try {
 			Site site = siteService.getSite(siteId);
-			return site.getUserRole(userId);
+
+            if (securityService.isSuperUser(userId)) {
+                return site.getMaintainRole();
+            } else {
+			    return site.getUserRole(userId).getId();
+            }
 		} catch (IdUnusedException iue) {
 			logger.error("There is no site with id '" + siteId + "'. Null will be returned.");
 		}

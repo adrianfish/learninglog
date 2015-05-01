@@ -272,9 +272,9 @@ public class LearningLogManagerImpl implements LearningLogManager {
 
 	public String getCurrentUserRole(String siteId) {
 
-		Role sakaiRole = sakaiProxy.getRoleForUser(sakaiProxy.getCurrentUserId(), siteId);
-		String llRole = persistenceManager.getLLRole(siteId, sakaiRole.getId());
-        if(llRole == null) {
+		String sakaiRole = sakaiProxy.getRoleForUser(sakaiProxy.getCurrentUserId(), siteId);
+		String llRole = persistenceManager.getLLRole(siteId, sakaiRole);
+        if (llRole == null) {
             logger.info("There is no LL Role for the current user. Returning 'Student' ...");
             llRole = "Student";
         }

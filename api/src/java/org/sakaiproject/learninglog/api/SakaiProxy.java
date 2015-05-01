@@ -77,7 +77,7 @@ public interface SakaiProxy {
 
 	public Set<Role> getSiteRoles(String siteId);
 
-	public Role getRoleForUser(String userId, String siteId);
+	public String getRoleForUser(String userId, String siteId);
 
 	public Set<String> getUsersInRole(String siteId, String role);
 

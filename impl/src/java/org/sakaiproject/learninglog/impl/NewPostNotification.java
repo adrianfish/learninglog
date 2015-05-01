@@ -113,7 +113,7 @@ public class NewPostNotification extends SiteEmailNotification {
         if (persistenceManager.isGroupMode(siteId)) {
             Set<String> fellowMembers = sakaiProxy.getFellowGroupMembers(userId, siteId);
             for (String fellowMember : fellowMembers) {
-                String sakaiRoleId = sakaiProxy.getRoleForUser(fellowMember, siteId).getId();
+                String sakaiRoleId = sakaiProxy.getRoleForUser(fellowMember, siteId);
                 String llRole = persistenceManager.getLLRole(siteId, sakaiRoleId);
                 if (Roles.TUTOR.equals(llRole)) {
                     tutorUserIds.add(fellowMember);

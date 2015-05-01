@@ -49,7 +49,7 @@ public class LearningLogSecurityManager {
         String currentUser = sakaiProxy.getCurrentUserId();
 		
 		// If the post is comment-able and the current user is a tutor in the post's site
-		if (post.isReady() && Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId).getId()))) {
+		if (post.isReady() && Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId)))) {
 			return true;
         }
 		
@@ -67,7 +67,7 @@ public class LearningLogSecurityManager {
 
         String currentUser = sakaiProxy.getCurrentUserId();
     	
-		if (Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId).getId()))) {
+		if (Roles.TUTOR.equals(persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId)))) {
 			return true;
         }
 		
@@ -137,7 +137,7 @@ public class LearningLogSecurityManager {
                 }
             } else {
 		
-                String llRole = persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId).getId());
+                String llRole = persistenceManager.getLLRole(siteId, sakaiProxy.getRoleForUser(currentUser, siteId));
 
                 // Only tutors can view recycled posts
                 if (Roles.TUTOR.equals(llRole)) {
@@ -221,7 +221,7 @@ public class LearningLogSecurityManager {
 
     	String siteId = comment.getSiteId();
 
-        Role sakaiRole = sakaiProxy.getRoleForUser(currentUserId, siteId);
+        final String sakaiRole = sakaiProxy.getRoleForUser(currentUserId, siteId);
 
         if(sakaiRole == null) {
             logger.warn("No role. Returning false ...");
@@ -237,7 +237,7 @@ public class LearningLogSecurityManager {
             }
         }
 
-	    String llRole = persistenceManager.getLLRole(siteId, sakaiRole.getId());
+	    String llRole = persistenceManager.getLLRole(siteId, sakaiRole);
 
         if(post.isRecycled() && Roles.TUTOR.equals(llRole)) {
             // The enclosing post has been recycled and I *am* a tutor. I can see it.
