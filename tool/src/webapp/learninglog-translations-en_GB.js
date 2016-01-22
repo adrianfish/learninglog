@@ -58,3 +58,7 @@ blog_turn_group_mode_on_tooltip="Turn group mode on";
 blog_turn_group_mode_off_tooltip="Turn group mode off";
 blog_turn_group_mode_on_label="Turn Group Mode On";
 blog_turn_group_mode_off_label="Turn Group Mode Off";
+blog_turn_emails_on_tooltip="Turn emails on";
+blog_turn_emails_off_tooltip="Turn emails off";
+blog_turn_emails_on_label="Turn Emails On";
+blog_turn_emails_off_label="Turn Emails Off";

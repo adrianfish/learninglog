@@ -48,4 +48,8 @@ public interface LearningLogManager extends EntityProducer {
     public boolean setGroupMode(String siteId, String groupMode);
 
     public boolean isGroupMode(String siteId);
+
+    public boolean setEmailsMode(String siteId, String emailsMode);
+
+    public boolean isEmailsMode(String siteId);
 }

@@ -19,6 +19,7 @@
 
     var learninglog = {
         groupMode: ${groupMode},
+        emailsMode: ${emailsMode},
         startupArgs: {
             isTutor:${isTutor},
             blogSiteId:'${siteId}',
@@ -57,6 +58,7 @@ ${sakaiHtmlHead}
     <li id="blog_permissions_link" role="menuitem"><span><a title="${blog_permissions_tooltip}" href="javascript:;">${blog_permissions_label}</a></span></li>
     <li id="blog_recycle_bin_link" role="menuitem"><span><a title="${blog_recycle_bin_tooltip}" href="javascript:;">${blog_recycle_bin_label}</a></span></li>
     <li id="blog_group_mode_link" role="menuitem"><span><a title="${blog_turn_group_mode_on_tooltip}" href="javascript:;">${blog_turn_group_mode_on_label}</a></span></li>
+    <li id="blog_emails_link" role="menuitem"><span><a title="${blog_turn_emails_on_tooltip}" href="javascript:;">${blog_turn_emails_on_label}</a></span></li>
 -->
 </div>
 

@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
-
-<beans>
+<beans xmlns="http://www.springframework.org/schema/beans"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+			    http://www.springframework.org/schema/beans/spring-beans.xsd">
 
 	<bean id="org.sakaiproject.learninglog.api.SakaiProxy" class="org.sakaiproject.learninglog.impl.SakaiProxyImpl" init-method="init">
         <property name="toolManager"><ref bean="org.sakaiproject.tool.api.ToolManager" /></property>
@@ -37,7 +38,7 @@
     <bean id="org.sakaiproject.learninglog.impl.LearningLogUserNotificationPreferencesRegistration"
       parent="org.sakaiproject.user.api.UserNotificationPreferencesRegistration"
       class="org.sakaiproject.learninglog.impl.LearningLogUserNotificationPreferencesRegistration"
-      init-method="init" singleton="true">
+      init-method="init" scope="singleton=">
       <property name="bundleLocation"><value>org.sakaiproject.learninglog.bundle.Messages</value></property>
       <property name="sectionTitleBundleKey"><value>prefs_title</value></property>
       <property name="sectionDescriptionBundleKey"><value>prefs_description</value></property>

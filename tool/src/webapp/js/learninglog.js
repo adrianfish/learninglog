@@ -425,6 +425,49 @@ learninglog.setGroupMode = function (mode, link) {
     return false;
 };
 
+learninglog.emailsButtonHandler = function () {
+
+    if (learninglog.emailsMode) {
+        learninglog.setEmailsMode(false, $(this));
+    } else {
+        learninglog.setEmailsMode(true, $(this));
+    }
+};
+
+learninglog.setEmailsMode = function (mode, link) {
+
+    link.off('click');
+
+    $.ajax({
+        url: '/direct/learninglog-post/set-emails-mode?siteId=' + this.startupArgs.blogSiteId + '&emailsMode=' + ((mode) ? 'Y' : 'N') ,
+        dataType: 'text',
+        cache: false,
+        success: function (data, textStatus, jqXHR) {
+
+            learninglog.emailsMode = mode;
+
+            if (mode == false) {
+                link
+                    .html(blog_turn_emails_on_label)
+                    .attr('title', blog_turn_emails_on_tooltip);
+            } else {
+                link
+                    .html(blog_turn_emails_off_label)
+                    .attr('title', blog_turn_emails_off_tooltip);
+            }
+
+            link.click(learninglog.emailsButtonHandler);
+
+            learninglog.switchState('home');
+        },
+        error: function (jqXHR, textStatus, errorThrown) {
+           console.log('sdfsdf');
+       }
+    });
+
+    return false;
+};
+
 (function () {
 
 	// We need the toolbar in a template so we can swap in the translations
@@ -447,6 +490,8 @@ learninglog.setGroupMode = function (mode, link) {
 	});
 
 	$('#blog_group_mode_link > span > a').on('click', learninglog.groupModeHandler);
+
+	$('#blog_emails_link > span > a').click(learninglog.emailsButtonHandler);
 
 	if (!learninglog.startupArgs.isTutor) {
 		$("#blog_create_post_link").show();
@@ -488,10 +533,21 @@ learninglog.setGroupMode = function (mode, link) {
         }
 
 		groupModeLink.show();
+
+		var emailsLink = $("#blog_emails_link");
+
+        if (learninglog.emailsMode) {
+            emailsLink.find('a')
+                .html(blog_turn_emails_off_label)
+                .attr('title', blog_turn_emails_off_tooltip);
+        }
+
+		emailsLink.show();
 	} else {
 		$("#blog_permissions_link").hide();
 		$("#blog_recycle_bin_link").hide();
-		$("#blog_group_mode_link").hide();
+		$('#blog_group_mode_link').hide();
+	    $('#blog_emails_link').hide();
 	}
 
 	try {

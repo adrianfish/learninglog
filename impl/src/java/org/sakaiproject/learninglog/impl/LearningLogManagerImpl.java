@@ -293,6 +293,14 @@ public class LearningLogManagerImpl implements LearningLogManager {
 		return persistenceManager.isGroupMode(siteId);
     }
 
+    public boolean setEmailsMode(String siteId, String emailsMode) {
+		return persistenceManager.setEmailsMode(siteId, emailsMode);
+    }
+
+    public boolean isEmailsMode(String siteId) {
+		return persistenceManager.isEmailsMode(siteId);
+    }
+
     /** START EntityProducer IMPL */
 
     public String archive(String siteId, Document doc, Stack stack, String archivePath, List attachments) {
