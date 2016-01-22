@@ -21,7 +21,7 @@
 	<properties>
 		<entitybroker.version>1.5.0</entitybroker.version>
       	<log4j.version>1.2.8</log4j.version>
-        <lombok.version>0.10.6</lombok.version>
+        <lombok.version>1.16.4</lombok.version>
 		<profile-api.version>2.9.0</profile-api.version>
         <servlet-api.version>2.4</servlet-api.version>
     </properties>
