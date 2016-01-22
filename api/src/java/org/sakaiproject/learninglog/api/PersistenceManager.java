@@ -1047,6 +1047,69 @@ public class PersistenceManager {
         }
     }
 
+    public boolean setEmailsMode(String siteId, String emailsMode) {
+
+        if (logger.isDebugEnabled()) {
+			logger.debug("setEmailsMode(" + siteId + "," + emailsMode + ")");
+        }
+
+		Connection connection = null;
+		PreparedStatement st = null;
+		try {
+			connection = sakaiProxy.borrowConnection();
+			st = sqlGenerator.getInsertOrUpdateEmailsMode(siteId, emailsMode, connection);
+			int result = st.executeUpdate();
+            connection.commit();
+			return true;
+		} catch (Exception e) {
+			logger.error("Caught exception whilst setting emails mode", e);
+			return false;
+		} finally {
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception e) { }
+			}
+
+			sakaiProxy.returnConnection(connection);
+		}
+    }
+
+    public boolean isEmailsMode(String siteId) {
+
+        if (logger.isDebugEnabled()) {
+			logger.debug("isEmailsMode(" + siteId + ")");
+        }
+
+		Connection connection = null;
+		PreparedStatement st = null;
+		try {
+			connection = sakaiProxy.borrowConnection();
+			st = sqlGenerator.getSelectEmailsMode(siteId, connection);
+			ResultSet rs = st.executeQuery();
+
+            if (rs.next() && rs.getString("EMAILS_MODE").equals("Y")) {
+                return true;
+            } else {
+                return false;
+            }
+		} catch (Exception e) {
+			logger.error("Caught exception whilst getting emails mode", e);
+
+            // This is the more secure response
+			return true;
+		} finally {
+
+			if (st != null) {
+				try {
+					st.close();
+				} catch (Exception e) { }
+			}
+
+			sakaiProxy.returnConnection(connection);
+        }
+    }
+
     public Set<String> getTutorsForStudent(String studentId, String siteId) {
 
         Set<String> tutors = new HashSet<String>();

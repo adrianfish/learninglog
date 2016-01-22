@@ -107,6 +107,8 @@ public class LearningLogTool extends HttpServlet {
 
         boolean isGroupMode = llManager.isGroupMode(siteId);
 
+        boolean isEmailsMode = llManager.isEmailsMode(siteId);
+
         boolean isTutor = llManager.getCurrentUserRole(siteId).equals("Tutor");
 		
 		VelocityContext ctx = new VelocityContext();
@@ -123,6 +125,7 @@ public class LearningLogTool extends HttpServlet {
         ctx.put("language", language);
         ctx.put("country", country);
         ctx.put("groupMode", isGroupMode ? "true" : "false");
+        ctx.put("emailsMode", isEmailsMode ? "true" : "false");
 
         response.setStatus(HttpServletResponse.SC_OK);
         response.setContentType("text/html");

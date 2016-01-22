@@ -130,10 +130,6 @@ public class NewPostNotification extends SiteEmailNotification {
             }
         }
 
-        for (String tutorUserId : tutorUserIds) {
-            System.out.println("TUTOR USER ID: " + tutorUserId);
-        }
-
 		tutorUserIds.remove("admin");
         
         List<User> tutors = new ArrayList<User>();

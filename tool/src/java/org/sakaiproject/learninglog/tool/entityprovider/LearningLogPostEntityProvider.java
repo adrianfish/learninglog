@@ -154,13 +154,11 @@ public final class LearningLogPostEntityProvider extends AbstractEntityProvider 
 			if((isNew || isPublishing) && post.isReady()) {
 
                 // This is for sitestats purposes.
-				//final String reference = Constants.REFERENCE_ROOT + "/" + siteId + "/post/" + post.getId();
 				sakaiProxy.postEvent(Constants.BLOG_POST_CREATED_SS, post.getReference(), post.getSiteId());
 				
-				// Send an email to all site participants apart from the author
-				learningLogManager.sendNewPostAlert(post);
-
-                //learningLogManager.alertTutors(post);
+                if (learningLogManager.isEmailsMode(post.getSiteId())) {
+				    learningLogManager.sendNewPostAlert(post);
+                }
 			}
 			
 			try {
@@ -455,6 +453,34 @@ public final class LearningLogPostEntityProvider extends AbstractEntityProvider 
 
         if (sakaiProxy.canModifyPermissions(siteId)) {
             learningLogManager.setGroupMode(siteId, groupMode);
+        }
+
+        return "SUCCESS";
+	}
+
+    @EntityCustomAction(action = "set-emails-mode", viewKey = EntityView.VIEW_LIST)
+	public String handleSetEmailsMode(EntityView view, Map<String,Object> params) {
+
+		final String userId = developerHelperService.getCurrentUserId();
+		
+		if (userId == null) {
+			throw new EntityException("You must be logged in to set emails mode", "", HttpServletResponse.SC_UNAUTHORIZED);
+		}
+
+		final String siteId = (String) params.get("siteId");
+		
+		if (siteId == null) {
+			throw new EntityException("Bad request: a site param must be supplied", "", HttpServletResponse.SC_BAD_REQUEST);
+        }
+
+        final String emailsMode = (String) params.get("emailsMode");
+
+		if (emailsMode == null) {
+			throw new EntityException("Bad request: an emails mode must be supplied", "", HttpServletResponse.SC_BAD_REQUEST);
+        }
+
+        if (sakaiProxy.canModifyPermissions(siteId)) {
+            learningLogManager.setEmailsMode(siteId, emailsMode);
         }
 
         return "SUCCESS";

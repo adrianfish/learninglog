@@ -762,4 +762,41 @@ public class SQLGenerator {
         st.setString(1, siteId);
         return st;
     }
+
+    public PreparedStatement getInsertOrUpdateEmailsMode(String siteId, String emailsMode, Connection connection) throws Exception {
+
+        PreparedStatement testST = null;
+
+        try {
+            testST = connection.prepareStatement("SELECT * FROM LL_SETTINGS WHERE SITE_ID = ?");
+            testST.setString(1, siteId);
+            ResultSet rs = testST.executeQuery();
+
+            if (rs.next()) {
+                PreparedStatement st = connection.prepareStatement("UPDATE LL_SETTINGS SET EMAILS_MODE = ? WHERE SITE_ID = ?");
+                st.setString(1, emailsMode);
+                st.setString(2, siteId);
+                return st;
+            } else {
+                PreparedStatement st = connection.prepareStatement("INSERT INTO LL_SETTINGS (SITE_ID, GROUP_MODE, EMAILS_MODE) VALUES(?,?,?)");
+                st.setString(1, siteId);
+                st.setString(2, "N");
+                st.setString(3, emailsMode);
+                return st;
+            }
+        } finally {
+            if (testST != null) {
+                try {
+                    testST.close();
+                } catch (SQLException e) {}
+            }
+        }
+    }
+
+    public PreparedStatement getSelectEmailsMode(String siteId, Connection connection) throws Exception {
+
+        PreparedStatement st = connection.prepareStatement("SELECT EMAILS_MODE FROM LL_SETTINGS WHERE SITE_ID = ?");
+        st.setString(1, siteId);
+        return st;
+    }
 }
