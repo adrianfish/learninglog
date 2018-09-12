@@ -240,7 +240,7 @@ public class SQLGenerator {
 	}
 
 	protected String doTableForSettings() {
-		return "CREATE TABLE LL_SETTINGS (SITE_ID " + VARCHAR + "(255) NOT NULL,GROUP_MODE CHAR(1) NOT NULL,PRIMARY KEY(SITE_ID))";
+		return "CREATE TABLE LL_SETTINGS (SITE_ID " + VARCHAR + "(255) NOT NULL,GROUP_MODE CHAR(1) NOT NULL, EMAILS_MODE CHAR(1) NOT NULL,PRIMARY KEY(SITE_ID))";
 	}
 
 	public String getSelectComments(String postId) {
