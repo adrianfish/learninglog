@@ -6,12 +6,11 @@
       xml:lang="${isolanguage}"
       lang="${isolanguage}">
 <head>
-<script type="text/javascript" src="/library/js/jquery/jquery-1.9.1.min.js"></script>
-<script type="text/javascript" src="/library/js/jquery/ui/1.10.3/jquery-ui.1.10.3.full.min.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/trimpath-template-latest.js"></script>
-<script type="text/javascript" src="/library/js/jquery/cluetip/1.2.10/jquery.cluetip.min.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.min.js"></script>
-<script type="text/javascript" src="/learninglog-tool/lib/jquery.tablesorter.pager.min.js"></script>
+<script type="text/javascript" src="/library/webjars/jquery/1.12.4/jquery.min.js"></script>
+<script type="text/javascript" src="/library/webjars/jquery-ui/1.12.1/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/library/webjars/jquery.tablesorter/2.27.7/dist/js/jquery.tablesorter.min.js"></script>
+<script type="text/javascript" src="/library/webjars/jquery.tablesorter/2.27.7/dist/js/extras/jquery.tablesorter.pager.min.js"></script>
+<script type="text/javascript" src="/library/js/trimpath-template-latest.js"></script>
 <script type="text/javascript" src="/profile2-tool/javascript/profile2-eb.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.MultiFile.js"></script>
 <script type="text/javascript" src="/learninglog-tool/lib/jquery.form.min.js"></script>
@@ -35,7 +34,7 @@
 <script type="text/javascript" src="/learninglog-tool/js/learninglog_permissions.js"></script>
 <script type="text/javascript" src="/learninglog-tool/learninglog-translations-en_GB.js"></script>
 <script type="text/javascript" src="/learninglog-tool/learninglog-translations-${isolanguage}.js"></script>
-<link rel="stylesheet" type="text/css" href="/library/js/jquery/jquery-ui/css/smoothness/jquery-ui.css" media="all" />
+<link rel="stylesheet" type="text/css" href="/library/webjars/jquery-ui/1.12.1/jquery-ui.min.css" media="all" />
 <link rel="stylesheet" type="text/css" href="/profile2-tool/css/profile2-profile-entity.css" media="all" />
 <link rel="stylesheet" type="text/css" href="/learninglog-tool/css/learninglog.css" media="all" />
 ${sakaiHtmlHead}
