@@ -742,9 +742,10 @@ public class SQLGenerator {
                 st.setString(2, siteId);
                 return st;
             } else {
-                PreparedStatement st = connection.prepareStatement("INSERT INTO LL_SETTINGS (SITE_ID, GROUP_MODE) VALUES(?,?)");
+                PreparedStatement st = connection.prepareStatement("INSERT INTO LL_SETTINGS VALUES(?,?,?)");
                 st.setString(1, siteId);
                 st.setString(2, groupMode);
+                st.setString(3, "N");
                 return st;
             }
         } finally {

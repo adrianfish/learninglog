@@ -996,6 +996,7 @@ public class PersistenceManager {
 			connection = sakaiProxy.borrowConnection();
 			st = sqlGenerator.getInsertOrUpdateGroupMode(siteId, groupMode, connection);
 			int result = st.executeUpdate();
+			connection.commit();
 			return true;
 		} catch (Exception e) {
 			logger.error("Caught exception whilst setting group mode", e);
